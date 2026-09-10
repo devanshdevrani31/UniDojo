@@ -25,23 +25,34 @@
   <div class="row" id="controls"></div>
   <div id="meta"></div>
 </main>
+<!--
+  All the material lives here, never in the code below. This is what lets UniDojo offer a
+  form editor over the questions, so a non-coder can fix a wrong answer without opening
+  HTML. See docs/02-game-contract.md.
+-->
+<script type="application/json" id="unidojo-content">
+{
+  "cards": [
+    { "front": "Mitochondrion",   "back": "Generates ATP via oxidative phosphorylation" },
+    { "front": "Ribosome",        "back": "Translates mRNA into polypeptide chains" },
+    { "front": "Rough ER",        "back": "Folds and modifies proteins destined for secretion" },
+    { "front": "Smooth ER",       "back": "Synthesises lipids and detoxifies compounds" },
+    { "front": "Golgi apparatus", "back": "Packages and sorts proteins for transport" },
+    { "front": "Lysosome",        "back": "Hydrolytic enzymes; breaks down waste and debris" },
+    { "front": "Peroxisome",      "back": "Oxidises fatty acids; neutralises hydrogen peroxide" },
+    { "front": "Nucleolus",       "back": "Assembles ribosomal subunits" },
+    { "front": "Cytoskeleton",    "back": "Structural support and intracellular transport" },
+    { "front": "Plasma membrane", "back": "Selectively permeable phospholipid bilayer" }
+  ]
+}
+</script>
 <script>
 'use strict';
 const V = 1;
 const post = (type, payload) => parent !== window && parent.postMessage({ v: V, type, payload }, '*');
 
-const CARDS = [
-  ['Mitochondrion', 'Generates ATP via oxidative phosphorylation'],
-  ['Ribosome', 'Translates mRNA into polypeptide chains'],
-  ['Rough ER', 'Folds and modifies proteins destined for secretion'],
-  ['Smooth ER', 'Synthesises lipids and detoxifies compounds'],
-  ['Golgi apparatus', 'Packages and sorts proteins for transport'],
-  ['Lysosome', 'Hydrolytic enzymes; breaks down waste and debris'],
-  ['Peroxisome', 'Oxidises fatty acids; neutralises hydrogen peroxide'],
-  ['Nucleolus', 'Assembles ribosomal subunits'],
-  ['Cytoskeleton', 'Structural support and intracellular transport'],
-  ['Plasma membrane', 'Selectively permeable phospholipid bilayer'],
-];
+const DATA = JSON.parse(document.getElementById('unidojo-content').textContent);
+const CARDS = DATA.cards.map(c => [c.front, c.back]);
 
 // Deterministic shuffle so a given seed always produces the same run.
 function shuffle(arr, seed) {

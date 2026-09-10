@@ -12,8 +12,45 @@ still works if you open it directly in a browser with no UniDojo at all.**
 my-game/
 ├── game.json      required — the manifest
 ├── index.html     required — the entry point
+├── content.json   recommended — the questions/answers, separate from the code
 └── ...            optional — images, audio, css, js (all relative paths)
 ```
+
+### `content.json` — why the split matters
+
+A game may hardcode its material inside `index.html`, and plenty of hand-made ones will.
+But if it instead keeps the material in `content.json` and renders from it, and the manifest
+says `"editable": true`, then **UniDojo can offer a form editor over that file** — a list of
+questions with text boxes.
+
+That turns "question 7 has the wrong answer" from a code edit into a 20-second form edit,
+which is the difference between corrections being something anyone can do and something only
+programmers can do. It's also what makes fork-and-improve available to the ~95% of students
+who don't code. Every generated game emits the split, and
+[the prompt](../prompts/make-a-game.md) asks for it.
+
+**Inline form (preferred for generated games).** A separate file is awkward when the whole
+point of [rung 2](07-publishing-paths.md) is *one thing to copy*. So the content may instead
+live inside `index.html` as a labelled JSON block:
+
+```html
+<script type="application/json" id="unidojo-content">
+  { "cards": [ { "front": "Mitochondrion", "back": "Generates ATP" } ] }
+</script>
+```
+
+The game reads it with
+`JSON.parse(document.getElementById('unidojo-content').textContent)`. On upload we extract
+that block to `content.json`; the editor writes back into it. Both forms are equivalent and
+`editable: true` applies to either.
+
+This keeps the one-file property — a student copies a single code block, and it still opens
+standalone in a browser — while giving us structured, editable content.
+
+The **shape** of the content is up to the game. We don't impose a schema, because the moment
+we do we've built a template system and capped what a game can be. The editor renders
+whatever it finds: strings become text inputs, arrays become repeatable rows, booleans
+become checkboxes. An exotic content shape gets a less pretty editor, not a broken one.
 
 Rules, enforced at upload by `scripts/validate-bundle.ts`:
 
@@ -42,10 +79,14 @@ Rules, enforced at upload by `scripts/validate-bundle.ts`:
   "difficulty": "medium",
   "scoring": { "type": "points", "max": 100 },
   "modes": ["practice", "test"],
+  "editable": true,
   "sourceAttribution": "Built from my own BIOM20001 lecture notes, Week 6.",
   "license": "CC-BY-4.0"
 }
 ```
+
+`editable: true` promises that all the game's material lives in `content.json` and that
+editing it is safe — nothing in `index.html` duplicates or contradicts it. Default `false`.
 
 `scoring.type` is one of `points` | `percent` | `time` | `none`. `none` means the game is
 exploratory (a simulation, a diagram explorer) and won't appear on leaderboards.

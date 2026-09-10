@@ -22,6 +22,11 @@ export const manifestSchema = z.object({
   difficulty: z.enum(["easy", "medium", "hard"]),
   scoring: scoringSchema,
   modes: z.array(z.enum(["practice", "test"])).min(1),
+  /**
+   * True iff every piece of the game's material lives in content.json and editing that
+   * file is safe. Gates the no-code content editor — see docs/07-publishing-paths.md.
+   */
+  editable: z.boolean().default(false),
   sourceAttribution: z.string().min(1),
   license: z.string().min(1),
 });

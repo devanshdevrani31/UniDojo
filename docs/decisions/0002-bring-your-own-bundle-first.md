@@ -1,6 +1,11 @@
 # 0002 — Ship "bring your own bundle" before the on-site builder
 
-**Status:** accepted
+**Status:** accepted, amended by [0004](0004-non-coders-are-the-default-user.md)
+
+> **Amendment:** 0004 keeps this decision's reasoning but demotes upload from *the* v1 path
+> to *a* v1 path. Uploading a file assumes file literacy most students don't have, so the
+> default front doors became "we generate it" and "make it in your own Claude, paste it
+> back". See [07-publishing-paths.md](../07-publishing-paths.md).
 
 ## Context
 Two ways to get games: students generate them with an LLM and upload (A), or students use

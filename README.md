@@ -35,28 +35,37 @@ Three loops, in order of importance:
 
 ## How games get made
 
-This was the main open question. The answer is **one runtime contract, two front doors.**
+**One runtime contract, four front doors — and you must never need to code to use it.**
 
-A game is a **self-contained folder** — an `index.html`, whatever assets it needs, and a
-`game.json` manifest. That's it. It runs inside a sandboxed iframe on a separate origin,
-with no network access. See [docs/02-game-contract.md](docs/02-game-contract.md).
+A game is a **self-contained folder** — an `index.html`, a `content.json` holding the
+actual questions, and a `game.json` manifest. It runs inside a sandboxed iframe on a
+separate origin with no network access. See
+[docs/02-game-contract.md](docs/02-game-contract.md).
 
 Because the contract is that thin, we can accept games from anywhere:
 
-| Path | How it works | Status |
+| Rung | How it works | Onboarding |
 | --- | --- | --- |
-| **A. Bring your own** | Student pastes [our prompt](prompts/make-a-game.md) + their notes into Claude (or any LLM), gets an `index.html`, drags it onto UniDojo. Published in ~30 seconds. | **v1 — build this first** |
-| **B. Build on site** | Pick a template (quiz / flashcards / matching / timeline / labelled diagram), paste notes, our server fills a JSON schema and renders it with a built-in engine. No code touched. | v2 |
+| **1. We make it** | Paste your notes on the site, pick a vibe, preview, publish. We call the model on our key, on a quota. | Nothing to set up |
+| **2. Make it in your Claude** | One button copies the prompt + your notes and opens Claude. Paste. Copy what it gives you. Paste it back. Done. | Nothing to set up |
+| **3. Connect your model** | Your own Claude / OpenAI / Kimi key, or a local Ollama URL. No quota. Keys stay in your browser. | An API key |
+| **4. Upload a bundle** | Drag in an `index.html` you built yourself. | Assumes file literacy |
 
-**Recommendation: ship A first.** It is a fraction of the work of building an authoring UI,
-it's the actual differentiator, and the security story is well-trodden (it's how CodePen
-previews work — `sandbox="allow-scripts"` on a foreign origin, plus a strict CSP). Path B
-is the safety net you add once you know from real data which five game shapes people
-actually want. Building B first means guessing.
+Rungs 1 and 2 are the front doors; 3 and 4 are upgrades offered after someone's published
+once. **Rung 2 is the interesting one** — it uses the student's existing Claude
+*subscription* through the normal chat window, so there's no developer console, no credit
+card, and no API key, and it costs us nothing. "Ask Claude to build it for me" turns out to
+be two paste operations, not an integration.
 
-The Vercel analogy holds, but note we are **not** running a deploy pipeline. There is no
-build step and no server per game — a bundle is static files in object storage served
-behind a CDN. That is a large amount of complexity you get to not have.
+Full reasoning: [docs/07-publishing-paths.md](docs/07-publishing-paths.md).
+
+Two things that make this work:
+
+- **Content is separate from code** (`content.json`), so fixing a wrong answer is a form
+  edit, not a code edit — which is also what makes fork-and-improve usable by non-coders.
+- **We are not running a deploy pipeline.** The Vercel analogy holds for the feel, not the
+  machinery: no build step, no server per game, just static files in object storage behind a
+  CDN. That's a large amount of complexity you get to not have.
 
 ## Why anyone contributes
 

@@ -1,8 +1,16 @@
 # Make a UniDojo game
 
-This is the prompt students paste into Claude (or any LLM) along with their notes. Keep it
-in sync with `docs/02-game-contract.md` — if they drift, uploads start failing and nobody
-knows why.
+The prompt students send to Claude (or ChatGPT, or Kimi). Rung 1 sends it server-side;
+rung 2 puts it on the student's clipboard along with their notes. Keep it in sync with
+`docs/02-game-contract.md` — if they drift, publishing starts failing and nobody knows why.
+
+Design constraints on this prompt, which are easy to break by accident:
+
+- **One file out.** The student copies a single code block. Two files means two copies means
+  a lost contributor.
+- **No instructions the student has to follow.** No "save this as index.html", no "create a
+  folder". They paste, they copy, they're done.
+- **Content in a labelled JSON block**, so our no-code editor can fix a wrong answer later.
 
 Everything below the line is the prompt.
 
@@ -17,14 +25,31 @@ fit for this material. Consider: timed sorting, drag-to-match, a labelled diagra
 build-the-sequence puzzle, a "spot the error" game, a dialogue where the player has to
 answer to progress.
 
+Reply with **one code block and nothing else that I need to act on.** I'm going to copy it
+straight into UniDojo.
+
 ## Hard requirements
 
 1. **One file.** All HTML, CSS and JavaScript inline. No frameworks, no build step.
-2. **No network access whatsoever.** No `fetch`, no CDN scripts, no Google Fonts, no
+2. **Put the questions in a JSON block, separate from the code.** Near the top of the file:
+
+```html
+<script type="application/json" id="unidojo-content">
+{ "cards": [ { "front": "...", "back": "..." } ] }
+</script>
+```
+
+   and read it with
+   `const DATA = JSON.parse(document.getElementById('unidojo-content').textContent);`
+   Use whatever shape suits your game — but **all** the material goes in there, and the code
+   below reads from it. Never hardcode a question in the JavaScript. This is what lets
+   someone fix a wrong answer later without touching code.
+
+3. **No network access whatsoever.** No `fetch`, no CDN scripts, no Google Fonts, no
    external images. Use system fonts, CSS, emoji, or inline SVG. This is enforced — a game
    with an external reference is rejected at upload.
-3. **It must work standalone.** Open the file in a browser and it plays. Test this.
-4. **Talk to the host** with `postMessage`, using exactly these messages:
+4. **It must work standalone.** Opening the file in a browser plays the game.
+5. **Talk to the host** with `postMessage`, using exactly these messages:
 
 ```js
 const post = (type, payload) => parent.postMessage({ v: 1, type, payload }, '*');
@@ -46,39 +71,42 @@ addEventListener('message', e => {
 ```
 
 In `practice` mode, show the correct answer after a mistake. In `test` mode, don't.
-If nothing sends `init` within 2 seconds (i.e. the file was opened directly), start anyway
-so it's testable standalone.
+If nothing sends `init` within 2 seconds (i.e. the file was opened directly), start anyway.
 
-5. **Accuracy over cleverness.** Every fact must come from my notes. Do not invent
+6. **Accuracy over cleverness.** Every fact must come from my notes. Do not invent
    plausible-sounding content to fill gaps. If my notes are thin on something, use less
    material rather than making it up — a wrong answer in a study game is worse than a short
    game.
-6. Works on a phone. Keyboard accessible on desktop.
-7. Playable in 3–8 minutes.
+7. Works on a phone. Keyboard accessible on desktop.
+8. Playable in 3–8 minutes.
 
-## Also produce a `game.json`
+## Put the manifest in the file too
 
-```json
+As a second JSON block, so I don't have to fill in a form:
+
+```html
+<script type="application/json" id="unidojo-manifest">
 {
   "schemaVersion": 1,
   "title": "",
   "description": "",
-  "university": "",
-  "course": "",
   "topic": "",
   "tags": [],
-  "entry": "index.html",
   "estimatedMinutes": 5,
   "difficulty": "easy | medium | hard",
   "scoring": { "type": "points", "max": 100 },
   "modes": ["practice", "test"],
-  "sourceAttribution": "Built from my own notes for <course>, <topic>.",
+  "editable": true,
   "license": "CC-BY-4.0"
 }
+</script>
 ```
 
-Before you finish, check: one file, zero external references, `ready` posted on load,
-`complete` posted at the end, and every fact traceable to my notes.
+(Leave out `university` and `course` — UniDojo fills those in from what I picked.)
+
+Before you finish, check: one file, both JSON blocks present, zero external references, no
+question hardcoded in the JS, `ready` posted on load, `complete` posted at the end, and
+every fact traceable to my notes.
 
 My notes:
 

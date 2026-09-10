@@ -105,6 +105,30 @@ try {
   if (!/['"]complete['"]/.test(html)) {
     warnings.push(`${manifest?.entry ?? "index.html"}: no 'complete' message found — scores will never be recorded`);
   }
+
+  // Content/code split — what makes the no-code editor possible.
+  // See docs/02-game-contract.md and docs/07-publishing-paths.md.
+  const inlineContent = /<script[^>]+id=["']unidojo-content["']/.test(html);
+  let sidecarContent = true;
+  try {
+    statSync(join(root, "content.json"));
+  } catch {
+    sidecarContent = false;
+  }
+
+  if (manifest?.editable === true && !inlineContent && !sidecarContent) {
+    errors.push(
+      `game.json declares "editable": true but the bundle has no content.json and no ` +
+        `<script id="unidojo-content"> block — there is nothing for the editor to edit`,
+    );
+  }
+  if (!manifest?.editable && !inlineContent && !sidecarContent) {
+    warnings.push(
+      `no separate content — nobody will be able to fix a wrong answer without editing ` +
+        `code. Move the questions into a <script type="application/json" ` +
+        `id="unidojo-content"> block and set "editable": true`,
+    );
+  }
 } catch {
   /* already reported above */
 }

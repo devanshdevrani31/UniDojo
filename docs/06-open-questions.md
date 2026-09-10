@@ -28,10 +28,26 @@ Launching everywhere at once means every course page is empty everywhere. One ca
 faculty, one exam period is the only version of this that reaches critical mass. Which one
 do you two actually have access to?
 
-### 6. LLM cost, if Path B happens
-On-site generation means we pay per game. Bring-your-own means the student pays (they use
-their own Claude account) — a real strategic advantage of Path A that's easy to overlook.
+### 6. Generation quota for rung 1
+We pay per game on the paste-your-notes path. How many per student per week? Too low and
+the default path feels broken; too high and a bored student can burn real money. Also needs
+an abuse answer: generation should be gated behind university-email verification at minimum,
+and rate-limited per account *and* per IP. Note the pressure valve — rung 2 (their own
+Claude subscription) costs us nothing, so the quota wall should push there, not to a paywall.
 
-### 7. Name and domain
+### 7. Does the shared-link return path work?
+Rung 2's guaranteed path is paste-the-code. A nicer variant — the student shares a link to
+the artifact/chat and we fetch it — depends on what those pages actually serve to a server
+without a session. Worth 30 minutes of experimentation; **not** worth promising in the UI
+until someone has actually fetched one. Same for prefilled-chat URLs: check the parameter
+and its length ceiling before relying on it, since long notes would silently truncate.
+
+### 8. Do we ever hold an API key?
+Current answer: no, keys stay in the browser
+([08-bring-your-own-model.md](08-bring-your-own-model.md)). That rules out providers that
+block browser calls. If one of those turns out to matter, the choice is skip it or run a
+proxy — and a proxy means we're storing credentials, with everything that implies.
+
+### 9. Name and domain
 `unidojo.app` / `unidojo.com` availability unchecked. The sandbox needs a **second
 registrable domain**, not a subdomain — budget for two.
