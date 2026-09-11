@@ -28,7 +28,7 @@ if (!src || !slug) {
 const MANIFESTS = {
   "bptm-exam-trainer": {
     schemaVersion: 1,
-    title: "BPTM Exam Trainer",
+    title: "Business Process Technologies and Management — Exam Trainer",
     description:
       "Five drills, a reachability lab and an 18-minute endterm simulation. Petri-net answers aren't hardcoded — they're computed live from the formal firing rules.",
     topic: "Whole course · exam prep",
@@ -36,13 +36,14 @@ const MANIFESTS = {
     estimatedMinutes: 20,
     difficulty: "hard",
     scoring: { type: "points", max: 100 },
-    modes: ["practice", "test"],
+    // Runs its own drill/boss modes; it never reads init.mode. See the contract.
+    modes: ["practice"],
     editable: false,
     license: "CC-BY-4.0",
   },
   "in2309-dependency-matrix": {
     schemaVersion: 1,
-    title: "IN2309 Dependency Matrix",
+    title: "Advanced Topics of Software Engineering — Dependency Matrix",
     description:
       "Nineteen topics, weighted by how heavily each has actually been examined across four past papers. Learn it, drill it with spaced repetition, then sit a real paper against the clock.",
     topic: "Whole course · exam prep",

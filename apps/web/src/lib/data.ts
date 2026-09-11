@@ -182,7 +182,7 @@ export const games: Game[] = [
     slug: "bptm-exam-trainer",
     courseSlug: "in2105",
     universitySlug: "tum",
-    title: "BPTM Exam Trainer",
+    title: "Business Process Technologies and Management — Exam Trainer",
     description:
       "Five drills, a reachability lab and an 18-minute endterm simulation. The Petri-net answers aren't hardcoded — they're computed live from the formal firing rules.",
     topic: "Whole course · exam prep",
@@ -207,7 +207,7 @@ export const games: Game[] = [
     slug: "in2309-dependency-matrix",
     courseSlug: "in2309",
     universitySlug: "tum",
-    title: "IN2309 Dependency Matrix",
+    title: "Advanced Topics of Software Engineering — Dependency Matrix",
     description:
       "Nineteen topics, weighted by how heavily each has actually been examined across four past papers. Learn it, drill it with spaced repetition, then sit a real paper against the clock.",
     topic: "Whole course · exam prep",
