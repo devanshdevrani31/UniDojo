@@ -35,8 +35,13 @@ origin that holds the user's session cookie. So:
 - The sandbox origin serves a strict CSP: `default-src 'none'; script-src 'unsafe-inline'
   'self'; img-src 'self' data:; style-src 'unsafe-inline' 'self'; connect-src 'none'`.
   `connect-src 'none'` is what stops a game phoning home with whatever it can scrape.
-- The only channel between game and host is `postMessage`, with a fixed message schema and
-  an origin check on both ends. See [02-game-contract.md](02-game-contract.md).
+- The only channel between game and host is `postMessage`, with a fixed message schema.
+  The frame is opaque-origin, so `event.origin` is the string `"null"` — the host identifies
+  the frame by `event.source`, not by an origin string. See
+  [02-game-contract.md](02-game-contract.md).
+- The host hands the bundle to the frame as `srcdoc` with the policy inlined, rather than
+  pointing `src` at it. See [ADR 0005](decisions/0005-bundles-run-as-srcdoc.md) for why,
+  and for what that costs.
 
 Everything a game needs — the questions, the images, the audio — ships inside the bundle.
 A game that needs the network is a game we don't host.

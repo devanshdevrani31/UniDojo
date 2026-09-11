@@ -1,0 +1,197 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Offer &amp; Acceptance Match-Up</title>
+<style>
+  :root { color-scheme: light; --fg:#14151a; --bg:#fbfbfa; --line:#e3e0d8; --accent:#4f46e5;
+          --ok:#3fae6b; --bad:#d9453a; }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:20px; font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;
+         color:var(--fg); background:var(--bg); }
+  main { max-width:720px; margin:0 auto; }
+  h1 { font-size:17px; margin:0 0 4px; }
+  #hint { font-size:13px; color:#6b7184; margin:0 0 16px; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  @media (max-width:560px){ .grid{grid-template-columns:1fr;} }
+  button.tile { font:inherit; text-align:left; padding:12px 14px; border-radius:10px;
+    border:1px solid var(--line); background:#fff; color:inherit; cursor:pointer; width:100%;
+    transition:border-color .15s, transform .1s; }
+  button.tile:hover:not(:disabled) { border-color:var(--accent); }
+  button.tile[aria-pressed="true"] { border-color:var(--accent); box-shadow:0 0 0 2px #4f46e522; }
+  button.tile:disabled { opacity:.32; cursor:default; }
+  button.tile.hit { border-color:var(--ok); background:#3fae6b12; }
+  button.tile.miss { border-color:var(--bad); animation:shake .3s; }
+  @keyframes shake { 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
+  .col h2 { font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:#6b7184;
+            margin:0 0 8px; font-weight:600; }
+  .col { display:flex; flex-direction:column; gap:8px; }
+  #feedback { min-height:44px; margin-top:14px; font-size:13px; padding:10px 12px;
+              border-radius:8px; border:1px solid transparent; }
+  #feedback.show { border-color:var(--line); background:#fff; }
+  #done { text-align:center; padding:40px 0; }
+  #done h2 { font-size:30px; margin:0; }
+</style>
+
+<!-- All the material lives here, never in the code. Lets UniDojo offer a form editor. -->
+<script type="application/json" id="unidojo-content">
+{
+  "pairs": [
+    { "case": "Carlill v Carbolic Smoke Ball Co",
+      "rule": "A unilateral offer to the world can be accepted by performance",
+      "why": "The advert's promise plus the £1000 deposit showed genuine intent to be bound — not mere puff." },
+    { "case": "Pharmaceutical Society v Boots",
+      "rule": "Goods on a shelf are an invitation to treat, not an offer",
+      "why": "The contract forms at the till, which is why a shop can refuse to sell at a mispriced label." },
+    { "case": "Partridge v Crittenden",
+      "rule": "An advertisement is normally an invitation to treat",
+      "why": "Treating adverts as offers would bind the seller to more contracts than they have stock." },
+    { "case": "Felthouse v Bindley",
+      "rule": "Silence cannot be imposed as acceptance",
+      "why": "An offeror cannot write 'if I hear nothing I take it as yours' and bind the other side." },
+    { "case": "Hyde v Wrench",
+      "rule": "A counter-offer destroys the original offer",
+      "why": "Once rejected by a counter-offer, the original cannot be revived by later acceptance." },
+    { "case": "Adams v Lindsell",
+      "rule": "Postal acceptance is effective when posted",
+      "why": "The postal rule places the risk of delay on the offeror, who chose post as the medium." }
+  ]
+}
+</script>
+
+<script type="application/json" id="unidojo-manifest">
+{ "schemaVersion": 1, "title": "Offer & Acceptance Match-Up",
+  "description": "Match each case to the principle it established.",
+  "topic": "Week 2 — Formation", "tags": ["match-up","cases"],
+  "estimatedMinutes": 6, "difficulty": "medium",
+  "scoring": { "type": "points", "max": 100 }, "modes": ["practice","test"],
+  "editable": true, "license": "CC-BY-4.0" }
+</script>
+
+<main>
+  <h1 id="title">Match each case to its principle</h1>
+  <p id="hint">Tap a case, then tap the rule it established.</p>
+  <div class="grid" id="board">
+    <div class="col"><h2>Cases</h2><div id="left"></div></div>
+    <div class="col"><h2>Principles</h2><div id="right"></div></div>
+  </div>
+  <div id="feedback"></div>
+</main>
+
+<script>
+'use strict';
+const V = 1;
+const post = (type, payload) => parent !== window && parent.postMessage({ v: V, type, payload }, '*');
+const DATA = JSON.parse(document.getElementById('unidojo-content').textContent);
+
+const left = document.getElementById('left');
+const right = document.getElementById('right');
+const feedback = document.getElementById('feedback');
+const board = document.getElementById('board');
+
+let mode = 'practice', started = 0, matched = 0, attempts = 0, pick = null;
+
+function rng(seed) {
+  let s = seed || 1;
+  return () => (s = (s * 1103515245 + 12345) % 2147483648) / 2147483648;
+}
+function shuffle(arr, rnd) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function tile(text, index, side) {
+  const b = document.createElement('button');
+  b.className = 'tile';
+  b.textContent = text;
+  b.dataset.index = index;
+  b.dataset.side = side;
+  b.setAttribute('aria-pressed', 'false');
+  return b;
+}
+
+function start(seed) {
+  const rnd = rng(seed);
+  started = Date.now();
+  matched = 0; attempts = 0; pick = null;
+  left.innerHTML = ''; right.innerHTML = '';
+
+  const pairs = DATA.pairs;
+  shuffle(pairs.map((p, i) => i), rnd).forEach(i => left.appendChild(tile(pairs[i].case, i, 'L')));
+  shuffle(pairs.map((p, i) => i), rnd).forEach(i => right.appendChild(tile(pairs[i].rule, i, 'R')));
+  post('progress', { done: 0, total: pairs.length });
+}
+
+board.addEventListener('click', e => {
+  const b = e.target.closest('button.tile');
+  if (!b || b.disabled) return;
+
+  if (!pick) {
+    if (b.dataset.side !== 'L') {
+      say('Start with a case on the left.');
+      return;
+    }
+    pick = b;
+    b.setAttribute('aria-pressed', 'true');
+    return;
+  }
+
+  if (b.dataset.side === 'L') {           // switching selection
+    pick.setAttribute('aria-pressed', 'false');
+    pick = b;
+    b.setAttribute('aria-pressed', 'true');
+    return;
+  }
+
+  attempts++;
+  const i = pick.dataset.index;
+  if (b.dataset.index === i) {
+    pick.classList.add('hit'); b.classList.add('hit');
+    pick.disabled = true; b.disabled = true;
+    pick.setAttribute('aria-pressed', 'false');
+    matched++;
+    say(DATA.pairs[i].why);
+    post('progress', { done: matched, total: DATA.pairs.length });
+    if (matched === DATA.pairs.length) finish();
+  } else {
+    b.classList.add('miss');
+    setTimeout(() => b.classList.remove('miss'), 320);
+    say(mode === 'practice' ? 'Not that one — ' + DATA.pairs[i].rule : 'Not that one.');
+    pick.setAttribute('aria-pressed', 'false');
+  }
+  pick = null;
+});
+
+function say(text) {
+  feedback.textContent = text;
+  feedback.className = text ? 'show' : '';
+}
+
+function finish() {
+  const total = DATA.pairs.length;
+  // Perfect play is one attempt per pair; every extra guess costs.
+  const score = Math.max(0, Math.round((total / Math.max(attempts, total)) * 100));
+  board.innerHTML = '<div id="done" style="grid-column:1/-1"><h2>' + score +
+    '%</h2><p style="color:#6b7184;font-size:13px">' + total + ' pairs in ' +
+    attempts + ' attempts</p></div>';
+  say('');
+  post('complete', { score, max: 100, durationMs: Date.now() - started,
+                     breakdown: { pairs: total, attempts } });
+}
+
+addEventListener('message', e => {
+  const d = e.data;
+  if (!d || d.v !== V || d.type !== 'init') return;
+  mode = d.payload?.mode || 'practice';
+  document.getElementById('hint').textContent = mode === 'test'
+    ? 'Tap a case, then its rule. No hints in test mode.'
+    : 'Tap a case, then tap the rule it established.';
+  start(d.payload?.seed || 1);
+});
+
+post('ready');
+setTimeout(() => { if (!started) start(1); }, 2000);
+</script>

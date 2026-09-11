@@ -21,9 +21,43 @@ const REQUIRED_MANIFEST_KEYS = [
   "entry", "estimatedMinutes", "difficulty", "scoring", "modes",
   "sourceAttribution", "license",
 ];
-// Any attribute pointing off-origin. data: URIs are fine; http(s):// and // are not.
-const EXTERNAL_REF = /\b(?:src|href)\s*=\s*["']?(?:https?:)?\/\//i;
 const NETWORK_CALL = /\b(?:fetch|XMLHttpRequest|WebSocket|EventSource|importScripts)\s*\(/;
+
+/**
+ * Finds references that would make the browser LOAD something off-origin.
+ *
+ * A plain `<a href="https://…">` is deliberately allowed: it fetches nothing, and in the
+ * sandboxed frame it can't navigate anywhere either. Authors put their own credit links
+ * in games, and rejecting those would be wrong. What we block is anything that pulls a
+ * resource in — scripts, stylesheets, fonts, images, media, frames.
+ */
+function externalResourceRefs(text) {
+  const hits = [];
+
+  // Tags whose src/href/srcset actually loads something.
+  const TAG = /<\s*(script|link|img|iframe|frame|source|audio|video|track|embed|object|input|use|image)\b([^>]*)>/gi;
+  for (const m of text.matchAll(TAG)) {
+    const attrs = m[2];
+    const url = attrs.match(
+      /\b(?:src|srcset|href|data)\s*=\s*["']?((?:https?:)?\/\/[^"'\s>]+)/i,
+    );
+    if (url) {
+      hits.push({ index: m.index, detail: `<${m[1].toLowerCase()}> loads ${url[1]}` });
+    }
+  }
+
+  // CSS: @import and url() pointing off-origin.
+  for (const m of text.matchAll(/@import\s+(?:url\()?["']?((?:https?:)?\/\/[^"')\s;]+)/gi)) {
+    hits.push({ index: m.index, detail: `@import from ${m[1]}` });
+  }
+  for (const m of text.matchAll(/url\(\s*["']?((?:https?:)?\/\/[^"')\s]+)/gi)) {
+    hits.push({ index: m.index, detail: `url() loads ${m[1]}` });
+  }
+
+  return hits;
+}
+
+const lineOf = (text, index) => text.slice(0, index).split("\n").length;
 
 const root = process.argv[2];
 if (!root) {
@@ -48,24 +82,66 @@ try {
   process.exit(2);
 }
 
+/** Reads a <script type="application/json" id="..."> block out of an HTML string. */
+function readJsonBlock(html, id) {
+  const m = html.match(
+    new RegExp(`<script[^>]*id=["']${id}["'][^>]*>([\\s\\S]*?)<\\/script>`, "i"),
+  );
+  if (!m) return null;
+  try {
+    return JSON.parse(m[1]);
+  } catch {
+    return null;
+  }
+}
+
 // --- manifest -------------------------------------------------------------
+// Two equivalent forms: a game.json sidecar, or an inline <script id="unidojo-manifest">
+// block. Generated games use the inline form so the student copies one thing.
 let manifest = null;
+let manifestSource = "game.json";
+
 try {
   manifest = JSON.parse(readFileSync(join(root, "game.json"), "utf8"));
-} catch (e) {
-  errors.push(`game.json missing or not valid JSON (${e.message})`);
+} catch {
+  try {
+    const entryHtml = readFileSync(join(root, "index.html"), "utf8");
+    manifest = readJsonBlock(entryHtml, "unidojo-manifest");
+    manifestSource = "index.html <script id=unidojo-manifest>";
+  } catch {
+    /* reported below */
+  }
+  if (!manifest) {
+    errors.push(
+      `no manifest: expected a game.json, or a <script type="application/json" ` +
+        `id="unidojo-manifest"> block inside index.html`,
+    );
+  }
 }
 
 if (manifest) {
-  for (const key of REQUIRED_MANIFEST_KEYS) {
-    if (manifest[key] === undefined) errors.push(`game.json: missing required key "${key}"`);
+  // university/course come from what the student picked on the site, so an inline
+  // manifest is not expected to carry them.
+  const inline = manifestSource !== "game.json";
+  const required = inline
+    ? REQUIRED_MANIFEST_KEYS.filter(
+        (k) => !["university", "course", "entry", "sourceAttribution"].includes(k),
+      )
+    : REQUIRED_MANIFEST_KEYS;
+
+  for (const key of required) {
+    if (manifest[key] === undefined) {
+      errors.push(`${manifestSource}: missing required key "${key}"`);
+    }
   }
-  if (manifest.schemaVersion !== 1) errors.push(`game.json: schemaVersion must be 1`);
+  if (manifest.schemaVersion !== 1) {
+    errors.push(`${manifestSource}: schemaVersion must be 1`);
+  }
   const entry = manifest.entry ?? "index.html";
   try {
     statSync(join(root, entry));
   } catch {
-    errors.push(`game.json: entry "${entry}" does not exist in the bundle`);
+    errors.push(`${manifestSource}: entry "${entry}" does not exist in the bundle`);
   }
 }
 
@@ -81,9 +157,10 @@ for (const f of files) {
 
   if ([".html", ".js", ".css"].includes(ext)) {
     const text = readFileSync(f, "utf8");
-    if (EXTERNAL_REF.test(text)) {
-      const line = text.split("\n").findIndex((l) => EXTERNAL_REF.test(l)) + 1;
-      errors.push(`${rel}:${line} references an external URL — bundles must be self-contained`);
+    for (const hit of externalResourceRefs(text)) {
+      errors.push(
+        `${rel}:${lineOf(text, hit.index)} ${hit.detail} — bundles must be self-contained`,
+      );
     }
     if (NETWORK_CALL.test(text)) {
       const line = text.split("\n").findIndex((l) => NETWORK_CALL.test(l)) + 1;

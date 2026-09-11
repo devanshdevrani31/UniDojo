@@ -60,6 +60,7 @@ Rules, enforced at upload by `scripts/validate-bundle.ts`:
 | File count | 50 | Ditto. |
 | Allowed types | html, css, js, json, png, jpg, webp, svg, mp3, ogg, woff2 | No executables, no PDFs pretending to be games. |
 | External references | **none** | No `<script src="https://...">`, no CDN fonts, no `fetch`. The CSP blocks it anyway; we reject at upload so failure is loud, not silent. |
+| Assets | inline `data:` URIs | Today a bundle must be a **single self-contained document** — relative paths can't resolve in the opaque-origin frame. See [ADR 0005](decisions/0005-bundles-run-as-srcdoc.md). |
 | Must post `ready` | within 10 s | A game that never signals ready shows a "this game is broken" state instead of a white box. |
 | Deterministic given a seed | strongly encouraged | Lets us replay and compare attempts fairly. |
 
@@ -87,6 +88,11 @@ Rules, enforced at upload by `scripts/validate-bundle.ts`:
 
 `editable: true` promises that all the game's material lives in `content.json` and that
 editing it is safe — nothing in `index.html` duplicates or contradicts it. Default `false`.
+
+`modes` must list only the modes the game **actually acts on**. The host shows a
+practice/test switch only when there is more than one, because switching restarts the run
+— a toggle that costs the player their progress and then changes nothing is worse than no
+toggle at all. Declaring `["practice"]` is the honest answer for most games.
 
 `scoring.type` is one of `points` | `percent` | `time` | `none`. `none` means the game is
 exploratory (a simulation, a diagram explorer) and won't appear on leaderboards.

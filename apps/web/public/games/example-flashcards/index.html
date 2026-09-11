@@ -1,0 +1,151 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cell Biology Flashcard Sprint</title>
+<style>
+  :root { color-scheme: light dark; --fg: #14151a; --bg: #fbfbfa; --accent: #4f46e5; }
+  @media (prefers-color-scheme: dark) { :root { --fg: #eceef2; --bg: #16171b; --accent: #a5b4fc; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px;
+         font: 16px/1.5 system-ui, -apple-system, Segoe UI, sans-serif; color: var(--fg); background: var(--bg); }
+  main { width: min(560px, 100%); text-align: center; }
+  #card { border: 1px solid color-mix(in oklab, var(--fg) 15%, transparent); border-radius: 14px;
+          padding: 40px 24px; min-height: 180px; display: grid; place-items: center; font-size: 22px; font-weight: 600; }
+  #bar { height: 4px; background: color-mix(in oklab, var(--fg) 12%, transparent); border-radius: 2px; margin: 16px 0; overflow: hidden; }
+  #bar > i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+  .row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
+  button { font: inherit; padding: 10px 18px; border-radius: 999px; border: 1px solid color-mix(in oklab, var(--fg) 20%, transparent);
+           background: transparent; color: inherit; cursor: pointer; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+  #meta { font-size: 13px; opacity: .6; margin-top: 12px; }
+</style>
+<main>
+  <div id="card">Loading…</div>
+  <div id="bar"><i></i></div>
+  <div class="row" id="controls"></div>
+  <div id="meta"></div>
+</main>
+<!--
+  All the material lives here, never in the code below. This is what lets UniDojo offer a
+  form editor over the questions, so a non-coder can fix a wrong answer without opening
+  HTML. See docs/02-game-contract.md.
+-->
+<script type="application/json" id="unidojo-content">
+{
+  "cards": [
+    { "front": "Mitochondrion",   "back": "Generates ATP via oxidative phosphorylation" },
+    { "front": "Ribosome",        "back": "Translates mRNA into polypeptide chains" },
+    { "front": "Rough ER",        "back": "Folds and modifies proteins destined for secretion" },
+    { "front": "Smooth ER",       "back": "Synthesises lipids and detoxifies compounds" },
+    { "front": "Golgi apparatus", "back": "Packages and sorts proteins for transport" },
+    { "front": "Lysosome",        "back": "Hydrolytic enzymes; breaks down waste and debris" },
+    { "front": "Peroxisome",      "back": "Oxidises fatty acids; neutralises hydrogen peroxide" },
+    { "front": "Nucleolus",       "back": "Assembles ribosomal subunits" },
+    { "front": "Cytoskeleton",    "back": "Structural support and intracellular transport" },
+    { "front": "Plasma membrane", "back": "Selectively permeable phospholipid bilayer" }
+  ]
+}
+</script>
+<script>
+'use strict';
+const V = 1;
+const post = (type, payload) => parent !== window && parent.postMessage({ v: V, type, payload }, '*');
+
+const DATA = JSON.parse(document.getElementById('unidojo-content').textContent);
+const CARDS = DATA.cards.map(c => [c.front, c.back]);
+
+// Deterministic shuffle so a given seed always produces the same run.
+function shuffle(arr, seed) {
+  const a = arr.slice();
+  let s = seed || 1;
+  const rnd = () => (s = (s * 1103515245 + 12345) % 2147483648) / 2147483648;
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+const card = document.getElementById('card');
+const fill = document.querySelector('#bar > i');
+const controls = document.getElementById('controls');
+const meta = document.getElementById('meta');
+
+let deck = [], i = 0, score = 0, mode = 'practice', started = 0, revealed = false;
+
+function render() {
+  if (i >= deck.length) return finish();
+  revealed = false;
+  card.textContent = deck[i][0];
+  meta.textContent = `Card ${i + 1} of ${deck.length} · ${mode} mode`;
+  fill.style.width = (i / deck.length * 100) + '%';
+  controls.innerHTML = '';
+  add('Show answer', reveal, true);
+}
+
+function add(label, fn, primary) {
+  const b = document.createElement('button');
+  b.textContent = label;
+  if (primary) b.className = 'primary';
+  b.onclick = fn;
+  controls.appendChild(b);
+}
+
+function reveal() {
+  revealed = true;
+  card.textContent = deck[i][1];
+  controls.innerHTML = '';
+  add('Got it', () => next(true), true);
+  add('Missed it', () => next(false));
+}
+
+function next(correct) {
+  if (correct) score++;
+  i++;
+  post('progress', { done: i, total: deck.length });
+  post('save', { state: { i, score } });
+  render();
+}
+
+function finish() {
+  fill.style.width = '100%';
+  const max = deck.length;
+  card.textContent = `${score} / ${max}`;
+  meta.textContent = 'Done.';
+  controls.innerHTML = '';
+  add('Play again', () => start(Date.now() % 1000), true);
+  post('complete', {
+    score: Math.round(score / max * 100),
+    max: 100,
+    durationMs: Date.now() - started,
+    breakdown: { correct: score, total: max },
+  });
+}
+
+function start(seed, resume) {
+  deck = shuffle(CARDS, seed);
+  i = resume?.i ?? 0;
+  score = resume?.score ?? 0;
+  started = Date.now();
+  render();
+}
+
+addEventListener('message', e => {
+  const d = e.data;
+  if (!d || d.v !== V) return;
+  if (d.type === 'init') {
+    mode = d.payload?.mode || 'practice';
+    start(d.payload?.seed || 1, d.payload?.resume);
+  }
+});
+
+addEventListener('keydown', e => {
+  if (e.key !== ' ' && e.key !== 'Enter') return;
+  e.preventDefault();
+  if (!revealed) reveal(); else next(true);
+});
+
+post('ready');
+// Standalone fallback: if no host answers, start anyway so the file is testable alone.
+setTimeout(() => { if (!started) start(1); }, 2000);
+</script>
