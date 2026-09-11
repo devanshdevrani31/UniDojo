@@ -1,0 +1,191 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Big-O: Spot the Error</title>
+<style>
+  :root { color-scheme: light; --fg:#14151a; --bg:#fbfbfa; --line:#e3e0d8;
+          --accent:#e2483d; --ok:#3fae6b; }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:20px; font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;
+         color:var(--fg); background:var(--bg); }
+  main { max-width:640px; margin:0 auto; }
+  header { display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin-bottom:4px; }
+  h1 { font-size:17px; margin:0; }
+  #clock { font-variant-numeric:tabular-nums; font-weight:600; font-size:17px; }
+  #clock.low { color:var(--accent); }
+  #sub { font-size:13px; color:#6b7184; margin:0 0 16px; }
+  ul { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
+  button.claim { font:inherit; text-align:left; width:100%; padding:12px 14px; border-radius:10px;
+    border:1px solid var(--line); background:#fff; color:inherit; cursor:pointer;
+    display:flex; gap:10px; align-items:flex-start; transition:border-color .15s; }
+  button.claim:hover:not(:disabled) { border-color:var(--accent); }
+  button.claim:disabled { cursor:default; }
+  button.claim .mark { width:18px; flex:none; font-weight:700; }
+  button.claim.flagged { border-color:var(--accent); background:#e2483d10; }
+  button.claim.right  { border-color:var(--ok); background:#3fae6b12; }
+  button.claim.wrong  { border-color:var(--accent); background:#e2483d10; opacity:.7; }
+  code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:13px;
+         background:#00000008; padding:1px 4px; border-radius:4px; }
+  .why { font-size:12.5px; color:#6b7184; margin-top:4px; }
+  #go { margin-top:16px; width:100%; font:inherit; font-weight:600; padding:11px;
+        border-radius:10px; border:0; background:var(--accent); color:#fff; cursor:pointer; }
+  #go:disabled { opacity:.4; cursor:default; }
+  #done { text-align:center; padding:44px 0; }
+  #done h2 { font-size:34px; margin:0; font-variant-numeric:tabular-nums; }
+</style>
+
+<!-- All the material lives here, never in the code. Lets UniDojo offer a form editor. -->
+<script type="application/json" id="unidojo-content">
+{
+  "timeLimitSeconds": 90,
+  "claims": [
+    { "text": "Binary search on a sorted array is O(log n)", "wrong": false,
+      "why": "Each comparison halves the remaining range." },
+    { "text": "Inserting at the head of a singly linked list is O(n)", "wrong": true,
+      "why": "It's O(1) — you only repoint the head. You're thinking of inserting at the tail without a tail pointer." },
+    { "text": "Quicksort's worst case is O(n log n)", "wrong": true,
+      "why": "Worst case is O(n squared), on already-sorted input with a naive pivot. O(n log n) is the average." },
+    { "text": "Looking up a key in a hash table is O(1) on average", "wrong": false,
+      "why": "Average case only — it degrades to O(n) when every key collides." },
+    { "text": "Heapsort needs O(n) extra space", "wrong": true,
+      "why": "Heapsort is in-place: O(1) extra. Mergesort is the one needing O(n)." },
+    { "text": "Breadth-first search visits every edge at most twice on an undirected graph", "wrong": false,
+      "why": "Once from each endpoint, which is why BFS is O(V + E)." }
+  ]
+}
+</script>
+
+<script type="application/json" id="unidojo-manifest">
+{ "schemaVersion": 1, "title": "Big-O: Spot the Error",
+  "description": "Six complexity claims. Three are wrong. Find them before the timer does.",
+  "topic": "Week 4 — Complexity", "tags": ["spot-the-error","timed"],
+  "estimatedMinutes": 5, "difficulty": "hard",
+  "scoring": { "type": "points", "max": 100 }, "modes": ["practice","test"],
+  "editable": true, "license": "CC-BY-4.0" }
+</script>
+
+<main>
+  <header>
+    <h1>Flag every claim that's wrong</h1>
+    <span id="clock">—</span>
+  </header>
+  <p id="sub">Tap the ones you think are false, then submit.</p>
+  <ul id="list"></ul>
+  <button id="go" disabled>Flag at least one</button>
+</main>
+
+<script>
+'use strict';
+const V = 1;
+const post = (type, payload) => parent !== window && parent.postMessage({ v: V, type, payload }, '*');
+const DATA = JSON.parse(document.getElementById('unidojo-content').textContent);
+
+const list = document.getElementById('list');
+const go = document.getElementById('go');
+const clock = document.getElementById('clock');
+const main = document.querySelector('main');
+
+let mode = 'practice', started = 0, order = [], flagged = new Set(), ticker = null, left = 0;
+
+function rng(seed) {
+  let s = seed || 1;
+  return () => (s = (s * 1103515245 + 12345) % 2147483648) / 2147483648;
+}
+
+function start(seed) {
+  const rnd = rng(seed);
+  order = DATA.claims.map((c, i) => i);
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+
+  started = Date.now();
+  flagged.clear();
+  list.innerHTML = '';
+
+  order.forEach(i => {
+    const li = document.createElement('li');
+    const b = document.createElement('button');
+    b.className = 'claim';
+    b.dataset.i = i;
+    b.innerHTML = '<span class="mark" aria-hidden></span><span class="body"></span>';
+    b.querySelector('.body').textContent = DATA.claims[i].text;
+    li.appendChild(b);
+    list.appendChild(li);
+  });
+
+  left = DATA.timeLimitSeconds;
+  tick();
+  clearInterval(ticker);
+  ticker = setInterval(tick, 1000);
+  post('progress', { done: 0, total: DATA.claims.length });
+}
+
+function tick() {
+  clock.textContent = Math.floor(left / 60) + ':' + String(left % 60).padStart(2, '0');
+  clock.classList.toggle('low', left <= 15);
+  if (left-- <= 0) { clearInterval(ticker); finish(true); }
+}
+
+list.addEventListener('click', e => {
+  const b = e.target.closest('button.claim');
+  if (!b || b.disabled) return;
+  const i = b.dataset.i;
+  if (flagged.has(i)) { flagged.delete(i); b.classList.remove('flagged'); b.querySelector('.mark').textContent = ''; }
+  else { flagged.add(i); b.classList.add('flagged'); b.querySelector('.mark').textContent = '✕'; }
+  go.disabled = flagged.size === 0;
+  go.textContent = flagged.size === 0 ? 'Flag at least one'
+    : 'Submit ' + flagged.size + ' flag' + (flagged.size === 1 ? '' : 's');
+  post('progress', { done: flagged.size, total: DATA.claims.filter(c => c.wrong).length });
+});
+
+go.addEventListener('click', () => finish(false));
+
+function finish(outOfTime) {
+  clearInterval(ticker);
+  go.remove();
+  clock.textContent = outOfTime ? "time's up" : '';
+
+  let correct = 0;
+  DATA.claims.forEach((c, i) => {
+    const b = list.querySelector('button[data-i="' + i + '"]');
+    if (!b) return;
+    b.disabled = true;
+    const didFlag = flagged.has(String(i));
+    const got = didFlag === c.wrong;
+    if (got) correct++;
+    b.classList.remove('flagged');
+    b.classList.add(got ? 'right' : 'wrong');
+    b.querySelector('.mark').textContent = got ? '✓' : '✕';
+    // Explanations are the point of the game, so they show in both modes at the end.
+    const why = document.createElement('div');
+    why.className = 'why';
+    why.textContent = (c.wrong ? 'False — ' : 'True — ') + c.why;
+    b.querySelector('.body').appendChild(why);
+  });
+
+  const score = Math.round((correct / DATA.claims.length) * 100);
+  const banner = document.createElement('div');
+  banner.id = 'done';
+  banner.innerHTML = '<h2>' + score + '%</h2>';
+  const p = document.createElement('p');
+  p.style.cssText = 'color:#6b7184;font-size:13px;margin:4px 0 0';
+  p.textContent = correct + ' of ' + DATA.claims.length + ' judged correctly';
+  banner.appendChild(p);
+  main.insertBefore(banner, list);
+
+  post('complete', { score, max: 100, durationMs: Date.now() - started,
+                     breakdown: { correct, total: DATA.claims.length, outOfTime } });
+}
+
+addEventListener('message', e => {
+  const d = e.data;
+  if (!d || d.v !== V || d.type !== 'init') return;
+  mode = d.payload?.mode || 'practice';
+  start(d.payload?.seed || 1);
+});
+
+post('ready');
+setTimeout(() => { if (!started) start(1); }, 2000);
+</script>

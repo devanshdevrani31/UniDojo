@@ -60,6 +60,7 @@ Rules, enforced at upload by `scripts/validate-bundle.ts`:
 | File count | 50 | Ditto. |
 | Allowed types | html, css, js, json, png, jpg, webp, svg, mp3, ogg, woff2 | No executables, no PDFs pretending to be games. |
 | External references | **none** | No `<script src="https://...">`, no CDN fonts, no `fetch`. The CSP blocks it anyway; we reject at upload so failure is loud, not silent. |
+| Assets | inline `data:` URIs | Today a bundle must be a **single self-contained document** — relative paths can't resolve in the opaque-origin frame. See [ADR 0005](decisions/0005-bundles-run-as-srcdoc.md). |
 | Must post `ready` | within 10 s | A game that never signals ready shows a "this game is broken" state instead of a white box. |
 | Deterministic given a seed | strongly encouraged | Lets us replay and compare attempts fairly. |
 

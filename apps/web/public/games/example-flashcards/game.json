@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "title": "Cell Biology Flashcard Sprint",
+  "description": "Reference bundle. Ten organelles, thirty seconds each — recall it before the bar runs out.",
+  "university": "example",
+  "course": "EXAMPLE101",
+  "topic": "Reference implementation",
+  "tags": [
+    "reference",
+    "flashcards",
+    "timed"
+  ],
+  "entry": "index.html",
+  "estimatedMinutes": 4,
+  "difficulty": "easy",
+  "scoring": {
+    "type": "points",
+    "max": 100
+  },
+  "modes": [
+    "practice",
+    "test"
+  ],
+  "editable": true,
+  "sourceAttribution": "Synthetic content written for this reference bundle. Not real course material.",
+  "license": "CC-BY-4.0"
+}

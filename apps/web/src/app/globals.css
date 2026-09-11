@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #12141a;
+  --color-ink-2: #1c1f28;
+  --color-paper: #fbfaf7;
+  --color-paper-2: #f2f0ea;
+  --color-dojo: #e2483d;
+  --color-dojo-dark: #c33a30;
+  --color-chalk: #eceef3;
+  --color-muted: #6b7184;
+
+  --font-sans: "Inter var", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    sans-serif;
+  --font-display: "Inter var", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", sans-serif;
+}
+
+:root {
+  --bg: var(--color-paper);
+  --bg-raised: #ffffff;
+  --fg: var(--color-ink);
+  --fg-muted: var(--color-muted);
+  --line: #e2ded4;
+  --accent: var(--color-dojo);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: var(--color-ink);
+    --bg-raised: var(--color-ink-2);
+    --fg: var(--color-chalk);
+    --fg-muted: #9299ad;
+    --line: #2b2f3b;
+    --accent: #ff6a5e;
+    color-scheme: dark;
+  }
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Subtle paper grain so large empty areas don't read as unfinished. */
+.grain::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.035;
+  background-image: radial-gradient(currentColor 0.5px, transparent 0.5px);
+  background-size: 4px 4px;
+}
+
+@utility surface {
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+}
+
+@utility muted {
+  color: var(--fg-muted);
+}
+
+@utility rule {
+  border-color: var(--line);
+}
+
+a {
+  color: inherit;
+}
+
+::selection {
+  background: var(--accent);
+  color: #fff;
+}

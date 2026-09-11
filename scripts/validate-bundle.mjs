@@ -48,24 +48,66 @@ try {
   process.exit(2);
 }
 
+/** Reads a <script type="application/json" id="..."> block out of an HTML string. */
+function readJsonBlock(html, id) {
+  const m = html.match(
+    new RegExp(`<script[^>]*id=["']${id}["'][^>]*>([\\s\\S]*?)<\\/script>`, "i"),
+  );
+  if (!m) return null;
+  try {
+    return JSON.parse(m[1]);
+  } catch {
+    return null;
+  }
+}
+
 // --- manifest -------------------------------------------------------------
+// Two equivalent forms: a game.json sidecar, or an inline <script id="unidojo-manifest">
+// block. Generated games use the inline form so the student copies one thing.
 let manifest = null;
+let manifestSource = "game.json";
+
 try {
   manifest = JSON.parse(readFileSync(join(root, "game.json"), "utf8"));
-} catch (e) {
-  errors.push(`game.json missing or not valid JSON (${e.message})`);
+} catch {
+  try {
+    const entryHtml = readFileSync(join(root, "index.html"), "utf8");
+    manifest = readJsonBlock(entryHtml, "unidojo-manifest");
+    manifestSource = "index.html <script id=unidojo-manifest>";
+  } catch {
+    /* reported below */
+  }
+  if (!manifest) {
+    errors.push(
+      `no manifest: expected a game.json, or a <script type="application/json" ` +
+        `id="unidojo-manifest"> block inside index.html`,
+    );
+  }
 }
 
 if (manifest) {
-  for (const key of REQUIRED_MANIFEST_KEYS) {
-    if (manifest[key] === undefined) errors.push(`game.json: missing required key "${key}"`);
+  // university/course come from what the student picked on the site, so an inline
+  // manifest is not expected to carry them.
+  const inline = manifestSource !== "game.json";
+  const required = inline
+    ? REQUIRED_MANIFEST_KEYS.filter(
+        (k) => !["university", "course", "entry", "sourceAttribution"].includes(k),
+      )
+    : REQUIRED_MANIFEST_KEYS;
+
+  for (const key of required) {
+    if (manifest[key] === undefined) {
+      errors.push(`${manifestSource}: missing required key "${key}"`);
+    }
   }
-  if (manifest.schemaVersion !== 1) errors.push(`game.json: schemaVersion must be 1`);
+  if (manifest.schemaVersion !== 1) {
+    errors.push(`${manifestSource}: schemaVersion must be 1`);
+  }
   const entry = manifest.entry ?? "index.html";
   try {
     statSync(join(root, entry));
   } catch {
-    errors.push(`game.json: entry "${entry}" does not exist in the bundle`);
+    errors.push(`${manifestSource}: entry "${entry}" does not exist in the bundle`);
   }
 }
 
