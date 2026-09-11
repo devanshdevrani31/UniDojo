@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cell Bio Dojo: Organelles &amp; Pathways</title>
+<script type="application/json" id="unidojo-manifest">
+{
+  "schemaVersion": 1,
+  "title": "Cell Bio Dojo: Organelles & Pathways",
+  "description": "A spaced-repetition campaign through cell organelles, the Krebs cycle, photosynthesis and the cell cycle. Match organelles to their jobs and rebuild pathway sequences, a little every day until exam day (2026-12-15).",
+  "topic": "Cell Biology",
+  "tags": ["cell-biology", "organelles", "krebs-cycle", "photosynthesis", "cell-cycle", "spaced-repetition"],
+  "estimatedMinutes": 12,
+  "difficulty": "medium",
+  "scoring": { "type": "points", "max": 200 },
+  "modes": ["practice", "test"],
+  "editable": true,
+  "license": "CC-BY-4.0"
+}
+</script>
+<script type="application/json" id="unidojo-content">
+{
+  "gametitle": "Cell Bio Dojo",
+  "examDate": "2026-12-15",
+  "newPerSession": 6,
+  "cards": [
+    { "id": "org-mito", "type": "choice", "xp": 10, "prompt": "Which organelle produces ATP?", "options": ["Mitochondrion", "Lysosome", "Golgi apparatus", "Nucleolus"], "answer": "Mitochondrion" },
+    { "id": "org-ribo", "type": "choice", "xp": 10, "prompt": "Where does translation happen?", "options": ["Ribosome", "Smooth ER", "Plasma membrane", "Central vacuole"], "answer": "Ribosome" },
+    { "id": "org-rer", "type": "choice", "xp": 10, "prompt": "Which organelle folds proteins and prepares them for secretion?", "options": ["Rough ER", "Smooth ER", "Lysosome", "Cytoskeleton"], "answer": "Rough ER" },
+    { "id": "org-ser", "type": "choice", "xp": 10, "prompt": "Which organelle makes lipids and detoxifies?", "options": ["Smooth ER", "Rough ER", "Nucleus", "Cell wall"], "answer": "Smooth ER" },
+    { "id": "org-golgi", "type": "choice", "xp": 10, "prompt": "Which organelle packages and sorts materials?", "options": ["Golgi apparatus", "Peroxisome", "Nucleolus", "Plasma membrane"], "answer": "Golgi apparatus" },
+    { "id": "org-lyso", "type": "choice", "xp": 10, "prompt": "Which organelle breaks down waste?", "options": ["Lysosome", "Golgi apparatus", "Chloroplast", "Ribosome"], "answer": "Lysosome" },
+    { "id": "org-peroxi", "type": "choice", "xp": 10, "prompt": "Which organelle oxidises fatty acids and handles H₂O₂?", "options": ["Peroxisome", "Lysosome", "Smooth ER", "Mitochondrion"], "answer": "Peroxisome" },
+    { "id": "org-nucleolus", "type": "choice", "xp": 10, "prompt": "Where are rRNA and ribosomal subunits made?", "options": ["Nucleolus", "Nucleus as a whole", "Rough ER", "Golgi apparatus"], "answer": "Nucleolus" },
+    { "id": "org-cyto", "type": "choice", "xp": 10, "prompt": "What provides support and internal transport in the cell?", "options": ["Cytoskeleton", "Cell wall", "Central vacuole", "Plasma membrane"], "answer": "Cytoskeleton" },
+    { "id": "org-pm", "type": "choice", "xp": 10, "prompt": "Which structure is the cell's selective bilayer?", "options": ["Plasma membrane", "Cell wall", "Cytoskeleton", "Central vacuole"], "answer": "Plasma membrane" },
+    { "id": "org-chloro", "type": "choice", "xp": 10, "prompt": "Where does photosynthesis happen in a plant cell?", "options": ["Chloroplast", "Mitochondrion", "Central vacuole", "Nucleus"], "answer": "Chloroplast" },
+    { "id": "org-vacuole", "type": "choice", "xp": 10, "prompt": "Which organelle maintains turgor pressure in a plant cell?", "options": ["Central vacuole", "Cell wall", "Chloroplast", "Lysosome"], "answer": "Central vacuole" },
+    { "id": "org-wall", "type": "choice", "xp": 10, "prompt": "Which plant structure is made of cellulose?", "options": ["Cell wall", "Plasma membrane", "Central vacuole", "Cytoskeleton"], "answer": "Cell wall" },
+    { "id": "org-nucleus", "type": "choice", "xp": 10, "prompt": "Where is DNA stored and transcribed?", "options": ["Nucleus", "Nucleolus", "Ribosome", "Mitochondrion"], "answer": "Nucleus" },
+
+    { "id": "rev-mito", "type": "choice", "xp": 10, "prompt": "ATP production is the job of the…", "options": ["Mitochondrion", "Chloroplast", "Golgi apparatus", "Lysosome"], "answer": "Mitochondrion" },
+    { "id": "rev-ribo", "type": "choice", "xp": 10, "prompt": "Translation (protein synthesis) is the job of the…", "options": ["Ribosome", "Rough ER", "Nucleolus", "Smooth ER"], "answer": "Ribosome" },
+    { "id": "rev-rer", "type": "choice", "xp": 10, "prompt": "Protein folding and secretion — which organelle?", "options": ["Rough ER", "Golgi apparatus", "Smooth ER", "Ribosome"], "answer": "Rough ER" },
+    { "id": "rev-ser", "type": "choice", "xp": 10, "prompt": "Lipid synthesis and detox — which organelle?", "options": ["Smooth ER", "Peroxisome", "Rough ER", "Lysosome"], "answer": "Smooth ER" },
+    { "id": "rev-golgi", "type": "choice", "xp": 10, "prompt": "Packaging and sorting — which organelle?", "options": ["Golgi apparatus", "Rough ER", "Lysosome", "Nucleus"], "answer": "Golgi apparatus" },
+    { "id": "rev-lyso", "type": "choice", "xp": 10, "prompt": "Waste breakdown — which organelle?", "options": ["Lysosome", "Peroxisome", "Golgi apparatus", "Central vacuole"], "answer": "Lysosome" },
+    { "id": "rev-peroxi", "type": "choice", "xp": 10, "prompt": "Fatty acid oxidation (and H₂O₂) — which organelle?", "options": ["Peroxisome", "Lysosome", "Mitochondrion", "Smooth ER"], "answer": "Peroxisome" },
+    { "id": "rev-nucleolus", "type": "choice", "xp": 10, "prompt": "Making rRNA and ribosomal subunits — which structure?", "options": ["Nucleolus", "Ribosome", "Nucleus as a whole", "Rough ER"], "answer": "Nucleolus" },
+    { "id": "rev-cyto", "type": "choice", "xp": 10, "prompt": "Support and transport inside the cell — which structure?", "options": ["Cytoskeleton", "Plasma membrane", "Cell wall", "Smooth ER"], "answer": "Cytoskeleton" },
+    { "id": "rev-pm", "type": "choice", "xp": 10, "prompt": "The selective bilayer of the cell is the…", "options": ["Plasma membrane", "Cell wall", "Cytoskeleton", "Golgi apparatus"], "answer": "Plasma membrane" },
+    { "id": "rev-chloro", "type": "choice", "xp": 10, "prompt": "Photosynthesis (in plants) — which organelle?", "options": ["Chloroplast", "Central vacuole", "Mitochondrion", "Ribosome"], "answer": "Chloroplast" },
+    { "id": "rev-vacuole", "type": "choice", "xp": 10, "prompt": "Turgor pressure (in plants) — which organelle?", "options": ["Central vacuole", "Cell wall", "Chloroplast", "Golgi apparatus"], "answer": "Central vacuole" },
+    { "id": "rev-wall", "type": "choice", "xp": 10, "prompt": "Cellulose is found in which plant structure?", "options": ["Cell wall", "Plasma membrane", "Central vacuole", "Chloroplast"], "answer": "Cell wall" },
+    { "id": "rev-nucleus", "type": "choice", "xp": 10, "prompt": "DNA and transcription live in the…", "options": ["Nucleus", "Nucleolus", "Ribosome", "Mitochondrion"], "answer": "Nucleus" },
+
+    { "id": "krebs-loc", "type": "choice", "xp": 15, "prompt": "Where does the Krebs cycle occur?", "options": ["Mitochondrial matrix", "Thylakoid", "Stroma", "Cytosol"], "answer": "Mitochondrial matrix" },
+    { "id": "krebs-step1", "type": "choice", "xp": 15, "prompt": "Krebs cycle: acetyl-CoA + oxaloacetate → ?", "options": ["Citrate", "G3P", "Oxaloacetate (back)", "ATP"], "answer": "Citrate" },
+    { "id": "krebs-yields", "type": "choice", "xp": 15, "prompt": "What does the Krebs cycle yield?", "options": ["NADH, FADH₂ and ATP", "ATP and NADPH", "Only NADPH", "G3P and CO₂"], "answer": "NADH, FADH₂ and ATP" },
+    { "id": "krebs-atp", "type": "choice", "xp": 15, "prompt": "The Krebs cycle's ATP is made by…", "options": ["Substrate-level phosphorylation", "The light reactions", "The Calvin cycle", "Translation"], "answer": "Substrate-level phosphorylation" },
+    { "id": "krebs-co2", "type": "choice", "xp": 15, "prompt": "Which gas is released by the Krebs cycle?", "options": ["CO₂", "O₂", "H₂O₂", "N₂"], "answer": "CO₂" },
+    { "id": "krebs-reactant", "type": "choice", "xp": 15, "prompt": "In the Krebs cycle, acetyl-CoA combines with…", "options": ["Oxaloacetate", "Citrate", "CO₂", "G3P"], "answer": "Oxaloacetate" },
+
+    { "id": "photo-lightloc", "type": "choice", "xp": 15, "prompt": "Where do the light reactions of photosynthesis occur?", "options": ["Thylakoid", "Stroma", "Mitochondrial matrix", "Cell wall"], "answer": "Thylakoid" },
+    { "id": "photo-lightprod", "type": "choice", "xp": 15, "prompt": "What do the light reactions produce?", "options": ["ATP and NADPH", "NADH and FADH₂", "G3P", "CO₂"], "answer": "ATP and NADPH" },
+    { "id": "photo-calvinloc", "type": "choice", "xp": 15, "prompt": "Where does the Calvin cycle occur?", "options": ["Stroma", "Thylakoid", "Mitochondrial matrix", "Nucleus"], "answer": "Stroma" },
+    { "id": "photo-calvinfix", "type": "choice", "xp": 15, "prompt": "What does the Calvin cycle fix?", "options": ["CO₂", "ATP", "NADPH", "H₂O₂"], "answer": "CO₂" },
+    { "id": "photo-calvinprod", "type": "choice", "xp": 15, "prompt": "The Calvin cycle turns fixed CO₂ into…", "options": ["G3P", "Citrate", "Oxaloacetate", "ATP"], "answer": "G3P" },
+    { "id": "photo-flow", "type": "order", "xp": 25, "prompt": "Build the path of photosynthesis:", "sequence": ["Light reactions in the thylakoid", "ATP + NADPH made", "Calvin cycle in the stroma", "CO₂ fixed into G3P"] },
+
+    { "id": "cc-order", "type": "order", "xp": 25, "prompt": "Order the phases of the cell cycle:", "sequence": ["G1", "S", "G2", "M"] },
+    { "id": "cc-s", "type": "choice", "xp": 15, "prompt": "What happens in S phase?", "options": ["DNA replication", "Mitosis", "Cytokinesis", "Protein secretion"], "answer": "DNA replication" },
+    { "id": "cc-mitosis", "type": "order", "xp": 25, "prompt": "Order the stages of mitosis:", "sequence": ["Prophase", "Metaphase", "Anaphase", "Telophase"] },
+    { "id": "cc-cyto", "type": "choice", "xp": 15, "prompt": "Which event follows mitosis to finish the M phase?", "options": ["Cytokinesis", "DNA replication", "G1 phase", "Prophase"], "answer": "Cytokinesis" },
+    { "id": "cc-m", "type": "choice", "xp": 15, "prompt": "The M phase of the cell cycle contains…", "options": ["Mitosis and cytokinesis", "DNA replication", "G1 and G2", "Only cytokinesis"], "answer": "Mitosis and cytokinesis" }
+  ]
+}
+</script>
+<style>
+:root{
+  --bg:#0e1512; --panel:#14201a; --text:#edf5f0; --muted:#8ba396;
+  --accent:#4ade80; --accent2:#a7f3d0; --danger:#f87171;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  background:radial-gradient(1200px 600px at 20% -10%, #17302655, transparent),
+             radial-gradient(900px 500px at 110% 110%, #4ade8011, transparent), var(--bg);
+  color:var(--text); font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+  display:flex; flex-direction:column; min-height:100%;
+}
+#strip{
+  display:flex; flex-wrap:wrap; gap:.5rem; align-items:center; justify-content:center;
+  padding:.6rem .8rem; background:#14201acc; backdrop-filter:blur(8px);
+  border-bottom:1px solid #4ade8022; position:sticky; top:0; z-index:5;
+}
+.pill{
+  display:flex; align-items:center; gap:.35rem; font-size:.82rem;
+  background:#0e1512; border:1px solid #4ade8033; border-radius:999px;
+  padding:.28rem .7rem; color:var(--muted);
+}
+.pill b{color:var(--text)}
+.pill .hot{color:var(--accent)}
+#track{padding:.45rem .9rem; font-size:.75rem; color:var(--muted); text-align:center}
+#trackbar{height:6px; background:#0e1512; border-radius:99px; overflow:hidden; margin:.3rem auto 0; max-width:420px}
+#trackfill{height:100%; width:0%; background:linear-gradient(90deg,var(--accent),var(--accent2)); border-radius:99px; transition:width .5s}
+main{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:1.2rem; overflow:auto}
+#card{
+  width:100%; max-width:520px; background:var(--panel);
+  border:1px solid #4ade802e; border-radius:22px; padding:1.4rem 1.3rem;
+  box-shadow:0 12px 40px #000a, inset 0 1px 0 #ffffff10;
+}
+#counter{font-size:.72rem; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-bottom:.5rem}
+#prompt{font-size:1.15rem; font-weight:600; line-height:1.45; margin:.2rem 0 1.1rem}
+.opts{display:grid; gap:.65rem}
+button.opt, button.chip, button.cta{
+  font:inherit; cursor:pointer; border-radius:14px; text-align:left;
+  background:#0e1512; color:var(--text); border:1px solid #4ade8033;
+  padding:.85rem 1rem; transition:border-color .15s, transform .1s, background .15s;
+}
+button.opt:hover, button.chip:hover, button.cta:hover{border-color:var(--accent); background:#12251b}
+button.opt:focus-visible, button.chip:focus-visible, button.cta:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+button.opt.correct{background:#14532d; border-color:var(--accent)}
+button.opt.wrong{background:#4c1d1d; border-color:var(--danger)}
+button.opt:disabled{cursor:default; opacity:.85}
+#orderarea{display:flex; flex-direction:column; gap:.9rem}
+#built{
+  min-height:64px; border:1.5px dashed #4ade8055; border-radius:14px;
+  padding:.5rem; display:flex; flex-wrap:wrap; gap:.45rem; align-items:center; background:#0e151288;
+}
+#built:empty::after{content:"Tap the pieces below in the right order…"; color:var(--muted); font-size:.85rem; padding:.3rem}
+#pool{display:flex; flex-wrap:wrap; gap:.45rem}
+.chip{font-size:.9rem; padding:.55rem .8rem}
+.chip.used{opacity:.25; pointer-events:none}
+#orderbtns{display:flex; gap:.6rem}
+.cta{background:linear-gradient(135deg,#166534,#14532d); border-color:var(--accent); font-weight:600; text-align:center}
+.cta.ghost{background:transparent}
+.cta:disabled{opacity:.4; cursor:default}
+#feedback{
+  margin-top:1rem; border-radius:14px; padding:.8rem 1rem; font-size:.92rem; line-height:1.5;
+  display:none; border:1px solid;
+}
+#feedback.show{display:block}
+#feedback.good{background:#14532d66; border-color:var(--accent)}
+#feedback.bad{background:#4c1d1d66; border-color:var(--danger)}
+#xpbar{height:8px; background:#0e1512; border-radius:99px; overflow:hidden; margin-top:1rem}
+#xpfill{height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); transition:width .4s}
+#levelmsg{margin-top:.4rem; font-size:.78rem; color:var(--muted); text-align:right}
+.xpfloat{
+  position:fixed; font-weight:800; color:var(--accent2); pointer-events:none; z-index:9;
+  animation:floatup 1s ease-out forwards; text-shadow:0 0 12px #4ade80;
+}
+@keyframes floatup{from{opacity:1; transform:translateY(0)}to{opacity:0; transform:translateY(-48px)}}
+#levelup{
+  position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+  pointer-events:none; z-index:10;
+}
+#levelup.show{display:flex}
+#levelup .burst{
+  font-size:1.6rem; font-weight:800; color:var(--accent2);
+  text-shadow:0 0 24px var(--accent); animation:burst 1.4s ease-out forwards;
+}
+@keyframes burst{
+  0%{transform:scale(.4);opacity:0} 20%{transform:scale(1.15);opacity:1}
+  60%{transform:scale(1)} 100%{transform:scale(1.1);opacity:0}
+}
+#summary{text-align:center}
+#summary h1{font-size:1.5rem; margin:.2rem 0 .6rem}
+#summary .big{font-size:2.4rem; font-weight:800; color:var(--accent2)}
+#summary p{color:var(--muted); line-height:1.6}
+@media (prefers-reduced-motion: reduce){
+  *{animation:none !important; transition:none !important}
+}
+.hidden{display:none !important}
+</style>
+</head>
+<body>
+
+<div id="strip" aria-label="Player status">
+  <span class="pill">🥋 <b id="s-level">Lv 1</b></span>
+  <span class="pill">✨ <b id="s-xp" class="hot">0 XP</b></span>
+  <span class="pill">🔥 <b id="s-streak">0 days</b></span>
+  <span class="pill">📅 <b id="s-exam">—</b></span>
+</div>
+<div id="track"><span id="tracktext"></span><div id="trackbar"><div id="trackfill"></div></div></div>
+
+<main>
+  <div id="card">
+    <div id="counter"></div>
+    <div id="prompt"></div>
+    <div id="play"></div>
+    <div id="feedback" role="status"></div>
+    <div id="xpbar"><div id="xpfill" style="width:0%"></div></div>
+    <div id="levelmsg"></div>
+  </div>
+</main>
+
+<div id="levelup"><div class="burst">⭐ LEVEL UP!</div></div>
+
+<script>
+"use strict";
+const DATA = JSON.parse(document.getElementById('unidojo-content').textContent);
+const post = (type, payload) => { try { parent.postMessage({ v: 1, type, payload }, '*'); } catch(e){} };
+
+/* ---------- campaign constants ---------- */
+const EXAM = DATA.examDate + "T00:00:00";
+const DAY = 86400000;
+const dayNum = d => Math.floor(d.getTime() / DAY);
+const today = () => dayNum(new Date());
+const NEW_PER_SESSION = DATA.newPerSession || 6;
+const XP_PER_LEVEL = 100;
+const INTERVALS = [1, 3, 7]; // days for consecutive correct reviews
+
+/* ---------- state ---------- */
+let mode = 'practice';
+let state = null;          // {xp, streak, lastDay, items:{id:{due,stage,seen}}}
+let queue = [];            // card indices for this session
+let qi = 0, sessionXP = 0, attempts = 0, firstTryCorrect = 0, maxXP = 0;
+let startedAt = 0, started = false;
+let missed = [];           // indices to re-ask at end of session
+
+function freshState(){ return { xp:0, streak:0, lastDay:null, startDay:null, items:{} }; }
+
+function save(){
+  const s = { v:1, kind:'cell-bio-dojo', xp:state.xp, streak:state.streak,
+              lastDay:state.lastDay, startDay:state.startDay, items:state.items };
+  post('save', s);
+  try { localStorage.setItem('unidojo-cellbio-save', JSON.stringify(s)); } catch(e){}
+}
+
+function loadStandalone(){
+  try{
+    const raw = localStorage.getItem('unidojo-cellbio-save');
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+
+/* ---------- session build ---------- */
+function itemState(id){ return state.items[id]; }
+
+function buildQueue(){
+  const seen = [], fresh = [];
+  DATA.cards.forEach((c,i)=>{
+    const st = itemState(c.id);
+    if (st && st.seen) seen.push(i); else fresh.push(i);
+  });
+  const due = seen.filter(i => itemState(DATA.cards[i].id).due <= today());
+  const newbies = fresh.slice(0, NEW_PER_SESSION);
+  queue = due.concat(newbies);
+  if (queue.length === 0 && seen.length){
+    // everything is scheduled in the future: bonus review of nearest-due items
+    seen.sort((a,b)=>itemState(DATA.cards[a].id).due - itemState(DATA.cards[b].id).due);
+    queue = seen.slice(0, NEW_PER_SESSION);
+  }
+  // light shuffle, keeping it deterministic-ish per day
+  queue.sort(()=>Math.random()-0.5);
+  maxXP = queue.reduce((s,i)=>s+(DATA.cards[i].xp||10),0);
+}
+
+/* ---------- strip / track ---------- */
+function level(){ return Math.floor(state.xp / XP_PER_LEVEL) + 1; }
+function daysToExam(){ return Math.max(0, Math.floor((new Date(EXAM) - new Date()) / DAY)); }
+function masteredCount(){
+  return DATA.cards.filter(c=>{const s=itemState(c.id); return s && s.seen && s.stage>=2;}).length;
+}
+function introducedCount(){ return DATA.cards.filter(c=>itemState(c.id)&&itemState(c.id).seen).length; }
+
+function renderStrip(){
+  document.getElementById('s-level').textContent = 'Lv ' + level();
+  document.getElementById('s-xp').textContent = state.xp + ' XP';
+  document.getElementById('s-streak').textContent = state.streak + (state.streak===1?' day':' days');
+  document.getElementById('s-exam').textContent = daysToExam() + 'd to exam';
+  const total = DATA.cards.length, done = masteredCount(), intro = introducedCount();
+  // pace: everything must be introduced 16 days before the exam so the
+  // 1d → 3d → 7d review ladder can complete before exam day
+  const runway = 16;
+  const introWindow = Math.max(1, daysToExam() - runway);
+  const daysElapsed = state.startDay ? Math.max(1, today() - state.startDay + 1) : 1;
+  const expectedIntro = Math.min(total, Math.ceil(total * daysElapsed / introWindow));
+  const onTrack = intro >= expectedIntro;
+  document.getElementById('tracktext').textContent =
+    done + '/' + total + ' mastered · ' + intro + '/' + total + ' introduced · ' +
+    (onTrack ? 'on track for 15 Dec 🌱' : 'behind pace — don\'t skip days 🌿');
+  document.getElementById('trackfill').style.width = (100*done/total) + '%';
+  const into = state.xp % XP_PER_LEVEL;
+  document.getElementById('xpfill').style.width = (100*into/XP_PER_LEVEL) + '%';
+  document.getElementById('levelmsg').textContent = (XP_PER_LEVEL-into) + ' XP to next level';
+}
+
+/* ---------- feedback helpers ---------- */
+function floatXP(txt, el){
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const r = el.getBoundingClientRect();
+  const s = document.createElement('span');
+  s.className = 'xpfloat'; s.textContent = txt;
+  s.style.left = (r.left + r.width/2 - 20) + 'px';
+  s.style.top = (r.top - 6) + 'px';
+  document.body.appendChild(s);
+  setTimeout(()=>s.remove(), 1100);
+}
+function checkLevel(before){
+  if (Math.floor(state.xp/XP_PER_LEVEL) > Math.floor(before/XP_PER_LEVEL)){
+    const el = document.getElementById('levelup');
+    el.classList.add('show');
+    setTimeout(()=>el.classList.remove('show'), 1400);
+  }
+}
+function feedback(good, html){
+  const f = document.getElementById('feedback');
+  f.className = good ? 'show good' : 'show bad';
+  f.innerHTML = html;
+}
+
+/* ---------- card rendering ---------- */
+const play = () => document.getElementById('play');
+let busy = false;
+
+function award(card, correct, el){
+  const before = state.xp;
+  if (correct){
+    state.xp += card.xp || 10;
+    sessionXP += card.xp || 10;
+    floatXP('+' + (card.xp||10) + ' XP', el);
+    checkLevel(before);
+  }
+  renderStrip();
+  save();
+}
+
+function handleDone(ci, correct){
+  const card = DATA.cards[ci];
+  const st = state.items[card.id] || (state.items[card.id] = { due: today(), stage: 0, seen: true });
+  st.seen = true;
+  if (correct){
+    st.stage = Math.min(st.stage + 1, INTERVALS.length);
+    st.due = today() + (INTERVALS[Math.min(st.stage, INTERVALS.length)-1] || 7);
+  } else {
+    st.stage = 0;
+    st.due = today();            // relearn at end of this session
+    missed.push(ci);
+  }
+  save();
+  post('progress', { done: qi, total: queue.length + missed.length });
+  setTimeout(next, correct ? 700 : 1600);
+}
+
+function renderChoice(ci){
+  const card = DATA.cards[ci];
+  const wrap = document.createElement('div');
+  wrap.className = 'opts';
+  const opts = card.options.slice().sort(()=>Math.random()-0.5);
+  opts.forEach(o=>{
+    const b = document.createElement('button');
+    b.className = 'opt'; b.type = 'button'; b.textContent = o;
+    b.addEventListener('click', ()=>{
+      if (busy) return; busy = true;
+      attempts++;
+      const ok = (o === card.answer);
+      if (ok) firstTryCorrect++;
+      wrap.querySelectorAll('button').forEach(x=>{
+        x.disabled = true;
+        if (x.textContent === card.answer) x.classList.add('correct');
+      });
+      if (!ok) b.classList.add('wrong');
+      award(card, ok, b);
+      if (ok){
+        feedback(true, nice() + ' <b>' + esc(card.answer) + '</b> — next review scheduled.');
+      } else if (mode === 'practice'){
+        feedback(false, 'Not quite — the answer is <b>' + esc(card.answer) + '</b>. We\'ll revisit this one at the end of today\'s session. 🌱');
+      } else {
+        feedback(false, 'Not quite. This one comes back at the end of the session.');
+      }
+      handleDone(ci, ok);
+    });
+    wrap.appendChild(b);
+  });
+  play().appendChild(wrap);
+}
+
+function renderOrder(ci){
+  const card = DATA.cards[ci];
+  const area = document.createElement('div');
+  area.id = 'orderarea';
+  const built = document.createElement('div'); built.id = 'built';
+  const pool = document.createElement('div'); pool.id = 'pool';
+  const btns = document.createElement('div'); btns.id = 'orderbtns';
+  const seq = card.sequence;
+  const order = [];
+  const chips = seq.map((step, realIdx)=>{
+    const c = document.createElement('button');
+    c.className = 'chip'; c.type = 'button'; c.textContent = step;
+    c.addEventListener('click', ()=>{
+      if (busy || c.classList.contains('used')) return;
+      c.classList.add('used');
+      order.push(realIdx);
+      const b2 = document.createElement('button');
+      b2.className = 'chip'; b2.type='button'; b2.textContent = step;
+      b2.addEventListener('click', ()=>{
+        if (busy) return;
+        order.splice(order.indexOf(realIdx),1);
+        b2.remove(); c.classList.remove('used');
+        check.disabled = order.length !== seq.length;
+      });
+      built.appendChild(b2);
+      check.disabled = order.length !== seq.length;
+    });
+    return c;
+  });
+  chips.sort(()=>Math.random()-0.5).forEach(c=>pool.appendChild(c));
+  const check = document.createElement('button');
+  check.className = 'cta'; check.type='button'; check.textContent = 'Check order ✔';
+  check.disabled = true; check.style.flex = '1';
+  const reset = document.createElement('button');
+  reset.className = 'cta ghost'; reset.type='button'; reset.textContent = 'Reset';
+  reset.addEventListener('click', ()=>{
+    if (busy) return;
+    order.length = 0; built.innerHTML=''; check.disabled = true;
+    chips.forEach(c=>c.classList.remove('used'));
+  });
+  check.addEventListener('click', ()=>{
+    if (busy || order.length !== seq.length) return;
+    busy = true; attempts++;
+    const ok = order.every((v,pos)=>v===pos);
+    if (ok) firstTryCorrect++;
+    award(card, ok, check);
+    const correctStr = seq.map((s,i)=>(i+1)+'. '+esc(s)).join('<br>');
+    if (ok){
+      feedback(true, nice() + ' Perfect sequence:<br>' + correctStr);
+    } else if (mode === 'practice'){
+      feedback(false, 'That order’s off. The correct sequence is:<br>' + correctStr + '<br><br>We\'ll try this one again at the end of the session.');
+    } else {
+      feedback(false, 'That order’s off. This one comes back at the end of the session.');
+    }
+    built.querySelectorAll('.chip').forEach(c=>c.style.borderColor = ok ? 'var(--accent)' : 'var(--danger)');
+    pool.querySelectorAll('.chip').forEach(c=>c.style.pointerEvents='none');
+    handleDone(ci, ok);
+  });
+  btns.appendChild(check); btns.appendChild(reset);
+  area.appendChild(built); area.appendChild(pool); area.appendChild(btns);
+  play().appendChild(area);
+}
+
+function nice(){
+  const n = ['Nice! 🌿','Sprouted! 🌱','Clean recall! ✨','Growing strong! 🍀','Photosynthesised that! ☀️'];
+  return n[Math.floor(Math.random()*n.length)];
+}
+function esc(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+/* ---------- flow ---------- */
+let relearn = false;
+function next(){
+  busy = false;
+  document.getElementById('feedback').className = '';
+  document.getElementById('feedback').innerHTML = '';
+  play().innerHTML = '';
+  if (qi >= queue.length){
+    if (missed.length){
+      queue = missed; missed = []; qi = 0; relearn = true;
+    } else { finish(); return; }
+  }
+  document.getElementById('counter').textContent =
+    (relearn ? 'Relearn · ' : '') + 'Card ' + (qi+1) + ' of ' + queue.length;
+  const ci = queue[qi++];
+  document.getElementById('prompt').textContent = DATA.cards[ci].prompt;
+  post('progress', { done: qi-1, total: queue.length });
+  if (DATA.cards[ci].type === 'order') renderOrder(ci); else renderChoice(ci);
+}
+
+function finish(){
+  state.lastDay = today();
+  save();
+  const ms = Date.now() - startedAt;
+  document.getElementById('counter').textContent = 'Session complete';
+  play().innerHTML = '';
+  const done = masteredCount(), total = DATA.cards.length;
+  const s = document.createElement('div');
+  s.id = 'summary';
+  s.innerHTML =
+    '<h1>🌿 Great session!</h1>' +
+    '<div class="big">+' + sessionXP + ' XP</div>' +
+    '<p>Level ' + level() + ' · ' + state.xp + ' XP total · 🔥 ' + state.streak + '-day streak<br>' +
+    firstTryCorrect + '/' + attempts + ' first-try correct<br>' +
+    done + '/' + total + ' cards mastered · ' + daysToExam() + ' days until your exam</p>' +
+    '<p><b>Come back tomorrow</b> — your next reviews sprout overnight. 🌱</p>';
+  play().appendChild(s);
+  document.getElementById('prompt').textContent = '';
+  document.getElementById('feedback').className='';
+  post('complete', { score: sessionXP, max: maxXP, durationMs: ms });
+}
+
+function startGame(seed, resume){
+  if (started) return; started = true;
+  startedAt = Date.now();
+  state = resume && resume.kind === 'cell-bio-dojo'
+    ? { xp: resume.xp||0, streak: resume.streak||0, lastDay: resume.lastDay??null,
+        startDay: resume.startDay??null, items: resume.items||{} }
+    : freshState();
+  if (typeof seed === 'number') { /* seed kept for future deterministic shuffle */ }
+  // streak bookkeeping: a new day?
+  const t = today();
+  if (!state.startDay) state.startDay = t;
+  if (state.lastDay !== t){
+    state.streak = (state.lastDay === t - 1) ? state.streak + 1 : 1;
+    state.lastDay = t;
+  }
+  buildQueue();
+  renderStrip();
+  save();
+  next();
+}
+
+/* ---------- host wiring ---------- */
+let gotInit = false;
+addEventListener('message', e => {
+  if (e.data?.v === 1 && e.data.type === 'init') {
+    gotInit = true;
+    mode = e.data.payload?.mode === 'test' ? 'test' : 'practice';
+    startGame(e.data.payload?.seed, e.data.payload?.resume);
+  }
+});
+post('ready');
+setTimeout(()=>{ if (!gotInit) startGame(undefined, loadStandalone()); }, 2000);
+</script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "title": "Organelle Match-Up \u2014 Cyberdojo",
+  "description": "Drag-to-match arcade game: pair the 10 cell organelles with their functions against the clock.",
+  "topic": "Cell Biology \u2014 Organelles & Their Functions",
+  "tags": [
+    "cell-biology",
+    "organelles",
+    "match-up",
+    "biology"
+  ],
+  "estimatedMinutes": 5,
+  "difficulty": "easy",
+  "scoring": {
+    "type": "points",
+    "max": 100
+  },
+  "modes": [
+    "practice",
+    "test"
+  ],
+  "editable": true,
+  "license": "CC-BY-4.0",
+  "university": "my-university",
+  "course": "BIO101",
+  "entry": "index.html",
+  "sourceAttribution": "Generated from 1 uploaded source file on 2026-09-11 by the uploader (localhost demo creator flow)."
+}

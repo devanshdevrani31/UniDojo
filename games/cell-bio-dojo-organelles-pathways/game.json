@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "title": "Cell Bio Dojo: Organelles & Pathways",
+  "description": "A spaced-repetition campaign through cell organelles, the Krebs cycle, photosynthesis and the cell cycle. Match organelles to their jobs and rebuild pathway sequences, a little every day until exam day (2026-12-15).",
+  "topic": "Cell Biology",
+  "tags": [
+    "cell-biology",
+    "organelles",
+    "krebs-cycle",
+    "photosynthesis",
+    "cell-cycle",
+    "spaced-repetition"
+  ],
+  "estimatedMinutes": 12,
+  "difficulty": "medium",
+  "scoring": {
+    "type": "points",
+    "max": 200
+  },
+  "modes": [
+    "practice",
+    "test"
+  ],
+  "editable": true,
+  "license": "CC-BY-4.0",
+  "university": "TU Berlin",
+  "course": "BIO101",
+  "entry": "index.html",
+  "sourceAttribution": "Generated from 1 uploaded source(s) on 2026-09-11."
+}

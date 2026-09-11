@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Organelle Match-Up — Cyberdojo</title>
+<style>
+  :root {
+    --bg: #0d0b1f;
+    --panel: #171233;
+    --text: #eceafb;
+    --muted: #8b86b8;
+    --accent: #a855f7;
+    --accent2: #22d3ee;
+    --good: #34d399;
+    --bad: #f43f5e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+    overflow-x: hidden;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(168,85,247,.18), transparent),
+      radial-gradient(ellipse 60% 40% at 50% 110%, rgba(34,211,238,.12), transparent);
+  }
+  h1, h2, .mono {
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    letter-spacing: .04em;
+  }
+  header {
+    width: 100%; max-width: 860px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap;
+    padding: 10px 4px 14px;
+  }
+  h1 {
+    font-size: clamp(1.05rem, 3.5vw, 1.5rem);
+    color: var(--accent2);
+    text-shadow: 0 0 12px rgba(34,211,238,.6);
+  }
+  h1 .slash { color: var(--accent); text-shadow: 0 0 12px rgba(168,85,247,.6); }
+  .hud { display: flex; gap: 14px; align-items: center; }
+  .hud .stat {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: .9rem; color: var(--muted);
+    background: var(--panel);
+    border: 1px solid rgba(168,85,247,.35);
+    border-radius: 8px; padding: 6px 10px;
+    box-shadow: 0 0 10px rgba(168,85,247,.15) inset;
+    white-space: nowrap;
+  }
+  .hud .stat b { color: var(--text); font-weight: 600; }
+
+  #board {
+    width: 100%; max-width: 860px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    align-items: start;
+  }
+  .col-title {
+    grid-column: 1 / -1;
+    color: var(--muted); font-size: .8rem;
+    font-family: ui-monospace, Menlo, monospace;
+    text-transform: uppercase; letter-spacing: .15em;
+    text-align: center;
+  }
+  .col { display: flex; flex-direction: column; gap: 10px; }
+
+  .chip {
+    position: relative;
+    background: var(--panel);
+    border: 1.5px solid rgba(168,85,247,.55);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: .95rem;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+    transition: transform .15s ease, box-shadow .2s ease, border-color .2s ease, opacity .3s ease;
+    box-shadow: 0 0 8px rgba(168,85,247,.12);
+    text-align: center;
+    font-family: ui-monospace, Menlo, monospace;
+    font-weight: 600;
+  }
+  .chip:hover, .chip:focus-visible {
+    border-color: var(--accent);
+    box-shadow: 0 0 16px rgba(168,85,247,.45);
+    outline: none;
+    transform: translateY(-1px);
+  }
+  .chip.selected {
+    border-color: var(--accent2);
+    box-shadow: 0 0 18px rgba(34,211,238,.6);
+    transform: scale(1.03);
+  }
+  .chip.ghost-src { opacity: .35; }
+  .chip.matched {
+    cursor: default;
+    border-color: var(--good);
+    color: var(--good);
+    box-shadow: 0 0 14px rgba(52,211,153,.4);
+    opacity: .85;
+  }
+
+  .slot {
+    background: var(--panel);
+    border: 1.5px dashed rgba(139,134,184,.5);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: .9rem;
+    line-height: 1.35;
+    min-height: 58px;
+    display: flex; align-items: center;
+    transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+  }
+  .slot .def { color: var(--text); }
+  .slot.hot {
+    border-color: var(--accent2);
+    border-style: solid;
+    box-shadow: 0 0 16px rgba(34,211,238,.45);
+  }
+  .slot.expect {
+    border-color: var(--accent2);
+    border-style: solid;
+    box-shadow: 0 0 12px rgba(34,211,238,.35);
+  }
+  .slot.matched {
+    border: 1.5px solid var(--good);
+    box-shadow: 0 0 14px rgba(52,211,153,.35);
+  }
+  .slot.matched .tag {
+    font-family: ui-monospace, Menlo, monospace;
+    font-weight: 700; color: var(--good);
+    margin-right: 8px; white-space: nowrap;
+  }
+  .slot.shake, .chip.shake { animation: shake .35s ease; }
+  .slot.reveal {
+    border-color: var(--accent);
+    box-shadow: 0 0 18px rgba(168,85,247,.7);
+  }
+  .slot.reveal .hint {
+    color: var(--accent);
+    font-family: ui-monospace, Menlo, monospace;
+    font-weight: 700;
+  }
+
+  #ghost {
+    position: fixed; z-index: 50; pointer-events: none;
+    left: 0; top: 0;
+    opacity: .92;
+    transform: translate(-50%, -50%);
+    display: none;
+  }
+
+  .overlay {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(13,11,31,.92);
+    display: none;
+    align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .overlay.show { display: flex; }
+  .card {
+    background: var(--panel);
+    border: 1.5px solid var(--accent);
+    border-radius: 14px;
+    box-shadow: 0 0 30px rgba(168,85,247,.5), 0 0 60px rgba(34,211,238,.2);
+    max-width: 440px; width: 100%;
+    padding: 28px 24px;
+    text-align: center;
+  }
+  .card h2 {
+    color: var(--accent2);
+    text-shadow: 0 0 12px rgba(34,211,238,.6);
+    margin-bottom: 10px; font-size: 1.4rem;
+  }
+  .card p { color: var(--muted); margin-bottom: 14px; line-height: 1.5; }
+  .card .big {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 2.2rem; color: var(--text);
+    margin: 8px 0 14px;
+    text-shadow: 0 0 16px rgba(168,85,247,.7);
+  }
+  .btn {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 1rem; font-weight: 700;
+    color: var(--bg);
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border: none; border-radius: 10px;
+    padding: 12px 26px;
+    cursor: pointer;
+    box-shadow: 0 0 18px rgba(34,211,238,.5);
+    transition: transform .15s ease, box-shadow .2s ease;
+  }
+  .btn:hover, .btn:focus-visible {
+    transform: translateY(-2px);
+    box-shadow: 0 0 26px rgba(34,211,238,.8);
+    outline: 2px solid var(--accent2); outline-offset: 2px;
+  }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%);
+    background: var(--panel);
+    border: 1px solid var(--accent2);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 10px 18px;
+    font-size: .9rem;
+    font-family: ui-monospace, Menlo, monospace;
+    box-shadow: 0 0 18px rgba(34,211,238,.4);
+    opacity: 0; pointer-events: none;
+    transition: opacity .25s ease;
+    z-index: 90;
+    max-width: 90vw; text-align: center;
+  }
+  .toast.show { opacity: 1; }
+
+  .sr-only {
+    position: absolute; width: 1px; height: 1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+  }
+
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    50% { transform: translateX(6px); }
+    75% { transform: translateX(-4px); }
+  }
+  @keyframes pulse {
+    0%,100% { box-shadow: 0 0 10px rgba(52,211,153,.3); }
+    50% { box-shadow: 0 0 22px rgba(52,211,153,.7); }
+  }
+  .slot.matched { animation: pulse .6s ease 2; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+  @media (max-width: 560px) {
+    #board { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .chip, .slot { padding: 10px; font-size: .82rem; }
+  }
+</style>
+</head>
+<body>
+
+<script type="application/json" id="unidojo-content">
+{
+  "instructions": "Match each cell organelle to its function. Drag a term onto its definition — or tap a term, then tap a definition. Beat the clock!",
+  "pairs": [
+    { "term": "Mitochondrion",  "def": "Generates ATP via oxidative phosphorylation." },
+    { "term": "Ribosome",       "def": "Translates mRNA into polypeptide chains." },
+    { "term": "Rough ER",       "def": "Folds and modifies proteins destined for secretion." },
+    { "term": "Smooth ER",      "def": "Synthesises lipids and detoxifies compounds." },
+    { "term": "Golgi apparatus","def": "Packages and sorts proteins for transport." },
+    { "term": "Lysosome",       "def": "Hydrolytic enzymes break down waste and debris." },
+    { "term": "Peroxisome",     "def": "Oxidises fatty acids and neutralises hydrogen peroxide." },
+    { "term": "Nucleolus",      "def": "Assembles ribosomal subunits." },
+    { "term": "Cytoskeleton",   "def": "Structural support and intracellular transport." },
+    { "term": "Plasma membrane","def": "Selectively permeable phospholipid bilayer." }
+  ]
+}
+</script>
+
+<script type="application/json" id="unidojo-manifest">
+{
+  "schemaVersion": 1,
+  "title": "Organelle Match-Up — Cyberdojo",
+  "description": "Drag-to-match arcade game: pair the 10 cell organelles with their functions against the clock.",
+  "topic": "Cell Biology — Organelles & Their Functions",
+  "tags": ["cell-biology", "organelles", "match-up", "biology"],
+  "estimatedMinutes": 5,
+  "difficulty": "easy",
+  "scoring": { "type": "points", "max": 100 },
+  "modes": ["practice", "test"],
+  "editable": true,
+  "license": "CC-BY-4.0"
+}
+</script>
+
+<header>
+  <h1>ORGANELLE <span class="slash">//</span> MATCH-UP</h1>
+  <div class="hud">
+    <div class="stat">MATCHED <b id="hudDone">0</b>/<span id="hudTotal">0</span></div>
+    <div class="stat">SCORE <b id="hudScore">0</b></div>
+    <div class="stat">TIME <b id="hudTime">0:00</b></div>
+  </div>
+</header>
+
+<div id="board" aria-live="polite">
+  <div class="col-title" id="instr"></div>
+  <div class="col" id="terms" role="listbox" aria-label="Terms — pick one up"></div>
+  <div class="col" id="defs" aria-label="Definitions — drop a matching term here"></div>
+</div>
+
+<div id="ghost" class="chip" aria-hidden="true"></div>
+<div class="toast" id="toast" role="status"></div>
+
+<div class="overlay show" id="startOverlay">
+  <div class="card">
+    <h2>⚡ ENTER THE CYBERDOJO ⚡</h2>
+    <p id="startText"></p>
+    <p style="font-size:.8rem">Mouse: drag &nbsp;•&nbsp; Touch: tap–tap &nbsp;•&nbsp; Keyboard: Tab to a term, Enter to pick up, Tab to a definition, Enter to drop</p>
+    <button class="btn" id="startBtn">START MATCHING</button>
+  </div>
+</div>
+
+<div class="overlay" id="endOverlay">
+  <div class="card">
+    <h2 id="endTitle">DOJO CLEARED</h2>
+    <p id="endSummary"></p>
+    <div class="big" id="endScore"></div>
+    <p id="endDetail" style="font-size:.85rem"></p>
+    <button class="btn" id="replayBtn">TRAIN AGAIN</button>
+  </div>
+</div>
+
+<div class="sr-only" id="live" aria-live="assertive"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  const DATA = JSON.parse(document.getElementById('unidojo-content').textContent);
+  const post = (type, payload) => {
+    try { parent.postMessage({ v: 1, type, payload }, '*'); } catch (e) {}
+  };
+
+  // --- seeded RNG (mulberry32) so hosts can reproduce shuffles ---
+  let rngState = 1;
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  let rand = mulberry32(Date.now() & 0xffffffff);
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(rand() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  // --- state ---
+  let mode = 'practice';
+  let startedAt = 0, timerInt = null;
+  let matched = 0, mistakes = 0, score = 0;
+  const TOTAL = DATA.pairs.length;
+  const PTS = Math.floor(100 / TOTAL); // 10 per match → max 100
+  let selectedChip = null;   // click/tap/keyboard selection
+  let dragChip = null, dragMoved = false, dragOffX = 0, dragOffY = 0;
+  let hintLock = false;
+
+  const termsEl = document.getElementById('terms');
+  const defsEl = document.getElementById('defs');
+  const ghost = document.getElementById('ghost');
+  const toast = document.getElementById('toast');
+  const live = document.getElementById('live');
+
+  document.getElementById('instr').textContent = '⟢ ' + DATA.instructions + ' ⟣';
+  document.getElementById('startText').textContent = DATA.instructions;
+  document.getElementById('hudTotal').textContent = TOTAL;
+
+  function fmtTime(ms) {
+    const s = Math.floor(ms / 1000);
+    return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+  }
+  function showToast(msg, ms) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => toast.classList.remove('show'), ms || 1800);
+  }
+  function announce(msg) { live.textContent = msg; }
+
+  function buildBoard() {
+    termsEl.innerHTML = '';
+    defsEl.innerHTML = '';
+    matched = 0; mistakes = 0; score = 0;
+    hintLock = false;
+    selectedChip = null;
+    updateHud();
+
+    const terms = shuffle(DATA.pairs.map((p, i) => ({ term: p.term, idx: i })));
+    const defs  = shuffle(DATA.pairs.map((p, i) => ({ def: p.def, idx: i })));
+
+    terms.forEach(t => {
+      const el = document.createElement('div');
+      el.className = 'chip';
+      el.textContent = t.term;
+      el.dataset.idx = t.idx;
+      el.tabIndex = 0;
+      el.setAttribute('role', 'option');
+      el.setAttribute('aria-selected', 'false');
+      el.setAttribute('aria-label', 'Term: ' + t.term);
+      termsEl.appendChild(el);
+    });
+
+    defs.forEach(d => {
+      const el = document.createElement('div');
+      el.className = 'slot';
+      el.dataset.idx = d.idx;
+      el.tabIndex = 0;
+      el.setAttribute('role', 'button');
+      el.setAttribute('aria-label', 'Definition: ' + d.def);
+      const span = document.createElement('span');
+      span.className = 'def';
+      span.textContent = d.def;
+      el.appendChild(span);
+      defsEl.appendChild(el);
+    });
+  }
+
+  function updateHud() {
+    document.getElementById('hudDone').textContent = matched;
+    document.getElementById('hudScore').textContent = score;
+  }
+
+  function pickUp(chip) {
+    clearSelection();
+    selectedChip = chip;
+    chip.classList.add('selected');
+    chip.setAttribute('aria-selected', 'true');
+    document.querySelectorAll('.slot:not(.matched)').forEach(s => s.classList.add('expect'));
+    announce(chip.textContent + ' selected. Choose the matching definition.');
+  }
+  function clearSelection() {
+    if (selectedChip) {
+      selectedChip.classList.remove('selected');
+      selectedChip.setAttribute('aria-selected', 'false');
+    }
+    selectedChip = null;
+    document.querySelectorAll('.slot.expect').forEach(s => s.classList.remove('expect'));
+  }
+
+  function tryMatch(chip, slot) {
+    if (!chip || !slot || slot.classList.contains('matched') || chip.classList.contains('matched')) return;
+    if (chip.dataset.idx === slot.dataset.idx) {
+      // correct
+      chip.classList.remove('selected', 'ghost-src');
+      chip.classList.add('matched');
+      chip.tabIndex = -1;
+      chip.setAttribute('aria-label', chip.textContent + ' — matched');
+      slot.classList.remove('hot', 'expect', 'reveal');
+      slot.classList.add('matched');
+      slot.tabIndex = -1;
+      const tag = document.createElement('span');
+      tag.className = 'tag';
+      tag.textContent = chip.textContent;
+      slot.prepend(tag);
+      slot.setAttribute('aria-label', chip.textContent + ' — ' + slot.textContent.trim());
+      matched++;
+      score += PTS;
+      updateHud();
+      post('progress', { done: matched, total: TOTAL });
+      announce('Correct! ' + chip.textContent + ' matched. ' + matched + ' of ' + TOTAL + '.');
+      clearSelection();
+      if (matched === TOTAL) finish();
+    } else {
+      // wrong
+      mistakes++;
+      slot.classList.add('shake');
+      chip.classList.add('shake');
+      setTimeout(() => { slot.classList.remove('shake'); chip.classList.remove('shake'); }, 400);
+      if (mode === 'practice') {
+        const correct = defsEl.querySelector('.slot[data-idx="' + chip.dataset.idx + '"]');
+        if (correct && !correct.classList.contains('matched')) {
+          correct.classList.add('reveal');
+          if (!correct.querySelector('.hint')) {
+            const h = document.createElement('span');
+            h.className = 'hint';
+            h.textContent = ' ← here in practice mode';
+            correct.appendChild(h);
+          }
+          hintLock = true;
+          setTimeout(() => {
+            correct.classList.remove('reveal');
+            const h = correct.querySelector('.hint');
+            if (h) h.remove();
+            hintLock = false;
+          }, 1600);
+        }
+        showToast('⚡ Not that one — the right definition glows.');
+        announce('Incorrect. The correct definition for ' + chip.textContent + ' is highlighted: ' +
+          (defsEl.querySelector('.slot[data-idx="' + chip.dataset.idx + '"] .def') || {}).textContent);
+      } else {
+        showToast('⚡ Missed. Keep going.');
+        announce('Incorrect match.');
+      }
+      clearSelection();
+    }
+  }
+
+  // --- pointer drag ---
+  function slotAt(x, y) {
+    const el = document.elementFromPoint(x, y);
+    return el ? el.closest('.slot') : null;
+  }
+
+  termsEl.addEventListener('pointerdown', e => {
+    const chip = e.target.closest('.chip');
+    if (!chip || chip.classList.contains('matched')) return;
+    e.preventDefault();
+    chip.setPointerCapture(e.pointerId);
+    dragChip = chip; dragMoved = false;
+    const r = chip.getBoundingClientRect();
+    dragOffX = e.clientX - r.left; dragOffY = e.clientY - r.top;
+    ghost.textContent = chip.textContent;
+  });
+
+  document.addEventListener('pointermove', e => {
+    if (!dragChip) return;
+    if (!dragMoved) {
+      dragMoved = true;
+      dragChip.classList.add('ghost-src');
+      ghost.style.display = 'block';
+    }
+    ghost.style.left = (e.clientX - dragOffX + ghost.offsetWidth / 2) + 'px';
+    ghost.style.top = (e.clientY - dragOffY + ghost.offsetHeight / 2) + 'px';
+    ghost.style.left = e.clientX + 'px';
+    ghost.style.top = e.clientY + 'px';
+    document.querySelectorAll('.slot.hot').forEach(s => s.classList.remove('hot'));
+    const s = slotAt(e.clientX, e.clientY);
+    if (s && !s.classList.contains('matched')) s.classList.add('hot');
+  });
+
+  document.addEventListener('pointerup', e => {
+    if (!dragChip) return;
+    const chip = dragChip;
+    dragChip = null;
+    ghost.style.display = 'none';
+    chip.classList.remove('ghost-src');
+    document.querySelectorAll('.slot.hot').forEach(s => s.classList.remove('hot'));
+    if (!dragMoved) {
+      // simple tap → toggle selection
+      if (selectedChip === chip) { clearSelection(); announce('Deselected.'); }
+      else pickUp(chip);
+      return;
+    }
+    const s = slotAt(e.clientX, e.clientY);
+    if (s) tryMatch(chip, s);
+  });
+
+  document.addEventListener('pointercancel', () => {
+    if (dragChip) { dragChip.classList.remove('ghost-src'); dragChip = null; }
+    ghost.style.display = 'none';
+    document.querySelectorAll('.slot.hot').forEach(s => s.classList.remove('hot'));
+  });
+
+  // click / keyboard on definition slots
+  function activateSlot(slot) {
+    if (slot.classList.contains('matched') || hintLock) return;
+    if (selectedChip) tryMatch(selectedChip, slot);
+    else showToast('Pick a term first (tap or drag one from the left).');
+  }
+  defsEl.addEventListener('click', e => {
+    if (dragMoved) { dragMoved = false; return; }
+    const slot = e.target.closest('.slot');
+    if (slot) activateSlot(slot);
+  });
+  defsEl.addEventListener('keydown', e => {
+    const slot = e.target.closest('.slot');
+    if (!slot) return;
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activateSlot(slot); }
+  });
+  termsEl.addEventListener('keydown', e => {
+    const chip = e.target.closest('.chip');
+    if (!chip || chip.classList.contains('matched')) return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      if (selectedChip === chip) { clearSelection(); announce('Deselected.'); }
+      else pickUp(chip);
+    } else if (e.key === 'Escape') { clearSelection(); }
+  });
+
+  // --- timer ---
+  function startTimer() {
+    startedAt = Date.now();
+    clearInterval(timerInt);
+    timerInt = setInterval(() => {
+      document.getElementById('hudTime').textContent = fmtTime(Date.now() - startedAt);
+    }, 500);
+  }
+
+  function finish() {
+    clearInterval(timerInt);
+    const dur = Date.now() - startedAt;
+    document.getElementById('endScore').textContent = score + ' / 100';
+    document.getElementById('endTitle').textContent =
+      mistakes === 0 ? 'FLAWLESS VICTORY ⚡' : 'DOJO CLEARED';
+    document.getElementById('endSummary').textContent =
+      mistakes === 0
+        ? 'Every organelle matched on the first try. The cells fear you.'
+        : 'All ' + TOTAL + ' organelles matched.';
+    document.getElementById('endDetail').textContent =
+      'Time: ' + fmtTime(dur) + '  •  Misses: ' + mistakes +
+      (mode === 'practice' ? '  •  practice mode' : '  •  test mode');
+    document.getElementById('endOverlay').classList.add('show');
+    post('complete', { score, max: 100, durationMs: dur });
+    announce('Game complete. Score ' + score + ' out of 100.');
+    document.getElementById('replayBtn').focus();
+  }
+
+  function startGame(seed) {
+    if (typeof seed === 'number') rand = mulberry32(seed);
+    else rand = mulberry32(Date.now() & 0xffffffff);
+    buildBoard();
+    document.getElementById('startOverlay').classList.remove('show');
+    document.getElementById('endOverlay').classList.remove('show');
+    startTimer();
+    post('progress', { done: 0, total: TOTAL });
+  }
+
+  // --- host handshake ---
+  let gotInit = false;
+  addEventListener('message', e => {
+    if (e.data && e.data.v === 1 && e.data.type === 'init') {
+      gotInit = true;
+      mode = e.data.payload && e.data.payload.mode === 'test' ? 'test' : 'practice';
+      const seed = e.data.payload && typeof e.data.payload.seed === 'number' ? e.data.payload.seed : undefined;
+      startGame(seed);
+    }
+  });
+
+  document.getElementById('startBtn').addEventListener('click', () => {
+    mode = 'practice'; // standalone default
+    startGame();
+  });
+  document.getElementById('replayBtn').addEventListener('click', () => startGame());
+
+  post('ready');
+
+  // Standalone fallback: if the host never sends init, start anyway after 2s.
+  setTimeout(() => {
+    if (!gotInit && !timerInt) {
+      mode = 'practice'; // standalone default
+      startGame();
+    }
+  }, 2000);
+})();
+</script>
+</body>
+</html>
