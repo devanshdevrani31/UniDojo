@@ -196,6 +196,9 @@ export const games: Game[] = [
     ratingCount: 0,
     publishedAt: "2026-09-11",
     bundlePath: "/games/bptm-exam-trainer/index.html",
+    featured: true,
+    pitch:
+      "The Petri-net answers aren't written down anywhere — liveness, boundedness and reachability are computed from the formal firing rules while you play, including the real past-exam nets.",
   },
   {
     slug: "in2309-dependency-matrix",
@@ -217,6 +220,9 @@ export const games: Game[] = [
     ratingCount: 0,
     publishedAt: "2026-09-11",
     bundlePath: "/games/in2309-dependency-matrix/index.html",
+    featured: true,
+    pitch:
+      "149 questions and 155 concepts, ranked by how many credits each topic has actually been worth across four past papers. It drills what the examiner keeps setting.",
   },
 ];
 
@@ -257,12 +263,20 @@ export function getGamesFor(courseSlug: string): Game[] {
     );
 }
 
+/** Hand-picked, shown above everything else. See Game.featured. */
+export function getFeaturedGames(): Game[] {
+  return games.filter((g) => g.featured);
+}
+
 export function getPopularGames(limit = 6): Game[] {
-  return [...games].sort((a, b) => b.playCount - a.playCount).slice(0, limit);
+  // Featured games get their own slot up top; don't repeat them down here.
+  const rest = games.filter((g) => !g.featured);
+  return [...rest].sort((a, b) => b.playCount - a.playCount).slice(0, limit);
 }
 
 export function getRecentGames(limit = 6): Game[] {
   return [...games]
+    .filter((g) => !g.featured)
     .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
     .slice(0, limit);
 }

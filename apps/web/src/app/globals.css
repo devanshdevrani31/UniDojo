@@ -70,6 +70,16 @@ body {
   border-color: var(--line);
 }
 
+/*
+ * While a game is playing full screen, the site chrome gets out of the way. See the
+ * comment in GameFrame.tsx — this is also what lets the overlay sit above the sticky
+ * header, which would otherwise win on stacking context.
+ */
+body.game-expanded > header,
+body.game-expanded > footer {
+  display: none;
+}
+
 a {
   color: inherit;
 }
@@ -77,4 +87,14 @@ a {
 ::selection {
   background: var(--accent);
   color: #fff;
+}
+
+/* Native fullscreen: the wrapper becomes the whole screen, so square off the card and
+   let the iframe take the remaining height. See GameFrame.tsx. */
+.game-surface:fullscreen {
+  display: flex;
+  flex-direction: column;
+  border-radius: 0;
+  border: 0;
+  background: var(--bg);
 }

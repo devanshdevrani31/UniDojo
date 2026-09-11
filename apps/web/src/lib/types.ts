@@ -35,6 +35,14 @@ export interface Game {
   publishedAt: string;
   /** Path under /public that serves the bundle's entry point. */
   bundlePath: string;
+  /**
+   * Pinned to the top of the home page. A brand-new game has no play count and no
+   * ratings, so it loses every ranked list on the site — featuring is how something
+   * good gets its first audience. Curated by hand for now.
+   */
+  featured?: boolean;
+  /** One line on why it's worth your time. Shown only on featured cards. */
+  pitch?: string;
 }
 
 export interface Author {

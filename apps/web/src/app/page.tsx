@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { GameCard } from "@/components/GameCard";
+import { FeaturedCard } from "@/components/FeaturedCard";
 import {
   countGamesFor,
   getCoursesFor,
+  getFeaturedGames,
   getPopularGames,
   getRecentGames,
   totalPlays,
@@ -10,6 +12,7 @@ import {
 } from "@/lib/data";
 
 export default function Home() {
+  const featured = getFeaturedGames();
   const popular = getPopularGames(3);
   const recent = getRecentGames(3);
 
@@ -41,7 +44,7 @@ export default function Home() {
             Make a game from your notes
           </Link>
           <Link
-            href="/g/big-o-spot-the-error"
+            href={featured[0] ? `/g/${featured[0].slug}` : "/g/big-o-spot-the-error"}
             className="surface rounded-xl px-5 py-3 text-[15px] font-medium transition-colors hover:border-[var(--accent)]"
           >
             Play one first →
@@ -68,6 +71,25 @@ export default function Home() {
           </div>
         ))}
       </section>
+
+      {featured.length > 0 && (
+        <section className="mt-14">
+          <div className="mb-5">
+            <h2 className="text-xl font-semibold tracking-tight">
+              Start with these
+            </h2>
+            <p className="mt-1 text-sm muted">
+              Full-course trainers, not single-topic quizzes. Both run for a whole
+              exam&apos;s worth of material.
+            </p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {featured.map((g) => (
+              <FeaturedCard key={g.slug} game={g} />
+            ))}
+          </div>
+        </section>
+      )}
 
       <Section title="Most played" href="/u/unimelb" linkLabel="Browse all">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

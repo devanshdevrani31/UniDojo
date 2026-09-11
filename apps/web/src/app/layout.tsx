@@ -38,7 +38,7 @@ export default function RootLayout({
             <Logo />
             <nav className="flex items-center gap-1 text-sm">
               <Link
-                href="/u/unimelb"
+                href="/u/tum"
                 className="rounded-lg px-3 py-1.5 muted transition-colors hover:bg-[var(--bg-raised)] hover:text-[var(--fg)]"
               >
                 Browse
