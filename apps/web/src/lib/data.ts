@@ -68,6 +68,21 @@ export const courses: Course[] = [
     title: "Linear Algebra I",
     faculty: "Mathematics",
   },
+  {
+    slug: "in2309",
+    universitySlug: "tum",
+    code: "IN2309",
+    title: "Advanced Software Engineering",
+    faculty: "Informatics",
+  },
+  {
+    slug: "bptm",
+    universitySlug: "tum",
+    code: "BPTM",
+    // TODO: confirm the official course title — this expansion of the acronym is a guess.
+    title: "Business Process and Technology Management",
+    faculty: "Informatics",
+  },
 ];
 
 const authors: Record<string, Author> = {
@@ -86,6 +101,12 @@ const authors: Record<string, Author> = {
   jonas: {
     handle: "jonas",
     displayName: "Jonas",
+    universitySlug: "tum",
+    verified: true,
+  },
+  devansh: {
+    handle: "devansh",
+    displayName: "Devansh Devrani",
     universitySlug: "tum",
     verified: true,
   },
@@ -154,6 +175,48 @@ export const games: Game[] = [
     ratingCount: 188,
     publishedAt: "2026-09-01",
     bundlePath: "/games/big-o-spot-the-error/index.html",
+  },
+  {
+    slug: "bptm-exam-trainer",
+    courseSlug: "bptm",
+    universitySlug: "tum",
+    title: "BPTM Exam Trainer",
+    description:
+      "Five drills, a reachability lab and an 18-minute endterm simulation. The Petri-net answers aren't hardcoded — they're computed live from the formal firing rules.",
+    topic: "Whole course · exam prep",
+    tags: ["petri-nets", "bpmn", "cpee", "exam-sim"],
+    author: authors.devansh,
+    rung: 4,
+    estimatedMinutes: 20,
+    difficulty: "hard",
+    editable: false,
+    playCount: 0,
+    ratingAccuracy: null,
+    ratingFun: null,
+    ratingCount: 0,
+    publishedAt: "2026-09-11",
+    bundlePath: "/games/bptm-exam-trainer/index.html",
+  },
+  {
+    slug: "in2309-dependency-matrix",
+    courseSlug: "in2309",
+    universitySlug: "tum",
+    title: "IN2309 Dependency Matrix",
+    description:
+      "Nineteen topics, weighted by how heavily each has actually been examined across four past papers. Learn it, drill it with spaced repetition, then sit a real paper against the clock.",
+    topic: "Whole course · exam prep",
+    tags: ["spaced-repetition", "drills", "exam-sim", "architecture"],
+    author: authors.devansh,
+    rung: 4,
+    estimatedMinutes: 25,
+    difficulty: "medium",
+    editable: false,
+    playCount: 0,
+    ratingAccuracy: null,
+    ratingFun: null,
+    ratingCount: 0,
+    publishedAt: "2026-09-11",
+    bundlePath: "/games/in2309-dependency-matrix/index.html",
   },
 ];
 

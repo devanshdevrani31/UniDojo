@@ -21,9 +21,43 @@ const REQUIRED_MANIFEST_KEYS = [
   "entry", "estimatedMinutes", "difficulty", "scoring", "modes",
   "sourceAttribution", "license",
 ];
-// Any attribute pointing off-origin. data: URIs are fine; http(s):// and // are not.
-const EXTERNAL_REF = /\b(?:src|href)\s*=\s*["']?(?:https?:)?\/\//i;
 const NETWORK_CALL = /\b(?:fetch|XMLHttpRequest|WebSocket|EventSource|importScripts)\s*\(/;
+
+/**
+ * Finds references that would make the browser LOAD something off-origin.
+ *
+ * A plain `<a href="https://…">` is deliberately allowed: it fetches nothing, and in the
+ * sandboxed frame it can't navigate anywhere either. Authors put their own credit links
+ * in games, and rejecting those would be wrong. What we block is anything that pulls a
+ * resource in — scripts, stylesheets, fonts, images, media, frames.
+ */
+function externalResourceRefs(text) {
+  const hits = [];
+
+  // Tags whose src/href/srcset actually loads something.
+  const TAG = /<\s*(script|link|img|iframe|frame|source|audio|video|track|embed|object|input|use|image)\b([^>]*)>/gi;
+  for (const m of text.matchAll(TAG)) {
+    const attrs = m[2];
+    const url = attrs.match(
+      /\b(?:src|srcset|href|data)\s*=\s*["']?((?:https?:)?\/\/[^"'\s>]+)/i,
+    );
+    if (url) {
+      hits.push({ index: m.index, detail: `<${m[1].toLowerCase()}> loads ${url[1]}` });
+    }
+  }
+
+  // CSS: @import and url() pointing off-origin.
+  for (const m of text.matchAll(/@import\s+(?:url\()?["']?((?:https?:)?\/\/[^"')\s;]+)/gi)) {
+    hits.push({ index: m.index, detail: `@import from ${m[1]}` });
+  }
+  for (const m of text.matchAll(/url\(\s*["']?((?:https?:)?\/\/[^"')\s]+)/gi)) {
+    hits.push({ index: m.index, detail: `url() loads ${m[1]}` });
+  }
+
+  return hits;
+}
+
+const lineOf = (text, index) => text.slice(0, index).split("\n").length;
 
 const root = process.argv[2];
 if (!root) {
@@ -123,9 +157,10 @@ for (const f of files) {
 
   if ([".html", ".js", ".css"].includes(ext)) {
     const text = readFileSync(f, "utf8");
-    if (EXTERNAL_REF.test(text)) {
-      const line = text.split("\n").findIndex((l) => EXTERNAL_REF.test(l)) + 1;
-      errors.push(`${rel}:${line} references an external URL — bundles must be self-contained`);
+    for (const hit of externalResourceRefs(text)) {
+      errors.push(
+        `${rel}:${lineOf(text, hit.index)} ${hit.detail} — bundles must be self-contained`,
+      );
     }
     if (NETWORK_CALL.test(text)) {
       const line = text.split("\n").findIndex((l) => NETWORK_CALL.test(l)) + 1;

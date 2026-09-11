@@ -1,0 +1,1690 @@
+<!doctype html>
+<script type="application/json" id="unidojo-manifest">
+{
+  "schemaVersion": 1,
+  "title": "BPTM Exam Trainer",
+  "description": "Five drills, a reachability lab and an 18-minute endterm simulation. Petri-net answers aren't hardcoded — they're computed live from the formal firing rules.",
+  "topic": "Whole course · exam prep",
+  "tags": [
+    "petri-nets",
+    "bpmn",
+    "cpee",
+    "exam-sim"
+  ],
+  "estimatedMinutes": 20,
+  "difficulty": "hard",
+  "scoring": {
+    "type": "points",
+    "max": 100
+  },
+  "modes": [
+    "practice",
+    "test"
+  ],
+  "editable": false,
+  "license": "CC-BY-4.0"
+}
+</script>
+<script>
+(function () {
+  var sent = false;
+  addEventListener('error', function (ev) {
+    if (sent || parent === window) return;
+    sent = true;
+    var where = ev && ev.lineno ? ' (line ' + ev.lineno + ')' : '';
+    parent.postMessage({ v: 1, type: 'error',
+      payload: { message: String((ev && ev.message) || 'script error') + where } }, '*');
+  });
+})();
+</script>
+<meta charset="utf-8">
+<title>BPTM Exam Trainer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root{
+  --ground:#eef1ef; --panel:#ffffff; --panel2:#f4f7f4; --ink:#1a211f; --muted:#5b6a63;
+  --accent:#9a6e14; --accent-soft:#f3e8cf; --ok:#2e7d4f; --ok-soft:#e2f0e7; --bad:#b04236; --bad-soft:#f6e4e1;
+  --line:#d8deda; --grid:#e3e9e4; --code-bg:#f4f7f4; --shadow:0 1px 3px rgba(20,30,25,.08);
+  --tok:#1a211f;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --ground:#14181a; --panel:#1c2224; --panel2:#232b2d; --ink:#e7ebe6; --muted:#8fa098;
+    --accent:#e0a83e; --accent-soft:#332b18; --ok:#58a876; --ok-soft:#1d2f25; --bad:#d06356; --bad-soft:#392320;
+    --line:#2c3538; --grid:#212a2c; --code-bg:#171d1f; --shadow:0 1px 3px rgba(0,0,0,.4);
+    --tok:#e0a83e;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#14181a; --panel:#1c2224; --panel2:#232b2d; --ink:#e7ebe6; --muted:#8fa098;
+  --accent:#e0a83e; --accent-soft:#332b18; --ok:#58a876; --ok-soft:#1d2f25; --bad:#d06356; --bad-soft:#392320;
+  --line:#2c3538; --grid:#212a2c; --code-bg:#171d1f; --shadow:0 1px 3px rgba(0,0,0,.4);
+  --tok:#e0a83e;
+}
+:root[data-theme="light"]{
+  --ground:#eef1ef; --panel:#ffffff; --panel2:#f4f7f4; --ink:#1a211f; --muted:#5b6a63;
+  --accent:#9a6e14; --accent-soft:#f3e8cf; --ok:#2e7d4f; --ok-soft:#e2f0e7; --bad:#b04236; --bad-soft:#f6e4e1;
+  --line:#d8deda; --grid:#e3e9e4; --code-bg:#f4f7f4; --shadow:0 1px 3px rgba(20,30,25,.08);
+  --tok:#1a211f;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--ground); color:var(--ink);
+  font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  min-height:100vh;
+}
+.mono, code, pre, .marking, .optcode{
+  font-family:ui-monospace,"Cascadia Mono",Consolas,"SF Mono",Menlo,monospace;
+}
+#app{max-width:820px;margin:0 auto;padding:0 16px 80px}
+/* ---- status rail ---- */
+#rail{
+  position:sticky;top:0;z-index:50;background:var(--ground);
+  border-bottom:1px solid var(--line);
+  padding:10px 2px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+}
+#rail .brand{font-weight:800;letter-spacing:.10em;font-size:13px;text-transform:uppercase;cursor:pointer;user-select:none}
+#rail .brand span{color:var(--accent)}
+#rail .spacer{flex:1}
+.stat{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.stat b{color:var(--ink);font-variant-numeric:tabular-nums}
+.rankchip{
+  background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent);
+  border-radius:999px;padding:1px 10px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+}
+.rail-sep{width:1px;height:16px;background:var(--line)}
+a.ricon{display:inline-flex;align-items:center;color:var(--muted);transition:color .12s}
+a.ricon:hover,a.ricon:focus-visible{color:var(--accent);outline:none}
+/* ---- headings ---- */
+h1{font-size:26px;font-weight:800;letter-spacing:.04em;margin:26px 0 4px;text-wrap:balance}
+.sub{color:var(--muted);margin:0 0 22px;font-size:15px;max-width:62ch}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:24px 0 6px}
+/* ---- op cards ---- */
+.ops{display:flex;flex-direction:column;gap:12px}
+.op{
+  display:flex;gap:16px;align-items:center;background:var(--panel);border:1px solid var(--line);
+  border-radius:10px;padding:16px 18px;cursor:pointer;box-shadow:var(--shadow);
+  transition:border-color .15s;
+}
+.op:hover,.op:focus-visible{border-color:var(--accent);outline:none}
+.op .num{font-family:ui-monospace,Consolas,monospace;font-size:13px;color:var(--muted);min-width:44px}
+.op .body{flex:1;min-width:0}
+.op .t{font-weight:800;letter-spacing:.05em;text-transform:uppercase;font-size:15px}
+.op .d{color:var(--muted);font-size:13.5px;margin-top:2px}
+.op.boss{border-style:dashed}
+.op.boss .t{color:var(--accent)}
+/* mastery = petri places */
+.meter{display:flex;gap:5px;align-items:center;margin-top:8px}
+.meter svg{display:block}
+.meter .pct{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;margin-left:4px}
+/* ---- mission view ---- */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px;box-shadow:var(--shadow);margin-top:16px}
+.qmeta{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:12px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;font-weight:700}
+.qtext{font-size:17px;font-weight:600;margin:10px 0 4px;text-wrap:balance}
+.qnote{color:var(--muted);font-size:14px;margin:2px 0 6px}
+.diagram{
+  background:var(--panel2);border:1px solid var(--line);border-radius:8px;margin:14px 0;
+  padding:10px;overflow-x:auto;
+  background-image:linear-gradient(var(--grid) 1px, transparent 1px),linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size:22px 22px;
+}
+.diagram svg{display:block;margin:0 auto}
+pre.codeblock{
+  background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;
+  font-size:13.5px;line-height:1.5;overflow-x:auto;margin:14px 0;white-space:pre;
+}
+/* options */
+.opts{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+button.opt{
+  text-align:left;background:var(--panel2);border:1px solid var(--line);border-radius:8px;
+  color:var(--ink);padding:11px 14px;font:inherit;font-size:14.5px;cursor:pointer;width:100%;
+  display:flex;gap:10px;align-items:flex-start;transition:border-color .12s;
+}
+button.opt:hover:not(:disabled),button.opt:focus-visible{border-color:var(--accent);outline:none}
+button.opt:disabled{cursor:default}
+.opt .key{
+  font-family:ui-monospace,Consolas,monospace;font-size:12px;color:var(--muted);
+  border:1px solid var(--line);border-radius:5px;padding:0 6px;line-height:20px;margin-top:1px;flex-shrink:0;
+}
+.opt.sel{border-color:var(--accent);background:var(--accent-soft)}
+.opt.right{border-color:var(--ok);background:var(--ok-soft)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.opt.missed{border-color:var(--ok);border-style:dashed}
+.opt pre{margin:0;background:none;border:none;padding:0;font-size:13px;line-height:1.45;white-space:pre;overflow-x:auto}
+/* text answer */
+.tin{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.tin input{
+  flex:1;min-width:200px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;
+  color:var(--ink);font-family:ui-monospace,Consolas,monospace;font-size:14px;padding:10px 12px;
+}
+.tin input:focus{outline:none;border-color:var(--accent)}
+/* buttons */
+.btn{
+  background:var(--accent);color:var(--panel);border:none;border-radius:8px;padding:10px 20px;
+  font:inherit;font-weight:700;font-size:14px;letter-spacing:.04em;cursor:pointer;
+}
+.btn:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--accent);filter:none}
+.btnrow{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;align-items:center}
+/* verdict */
+.verdict{border-radius:8px;padding:12px 14px;margin-top:14px;font-size:14.5px;border:1px solid}
+.verdict.ok{background:var(--ok-soft);border-color:var(--ok)}
+.verdict.bad{background:var(--bad-soft);border-color:var(--bad)}
+.verdict .vh{font-weight:800;letter-spacing:.08em;text-transform:uppercase;font-size:12px;margin-bottom:4px}
+.verdict.ok .vh{color:var(--ok)} .verdict.bad .vh{color:var(--bad)}
+.verdict p{margin:6px 0 0}
+/* reachability table */
+table.reach{border-collapse:collapse;font-family:ui-monospace,Consolas,monospace;font-size:13px;margin:12px 0;min-width:100%}
+table.reach th,table.reach td{border:1px solid var(--line);padding:5px 9px;text-align:center;font-variant-numeric:tabular-nums}
+table.reach th{background:var(--panel2);font-weight:700}
+table.reach td.mk{font-weight:700}
+table.reach tr.cur td{background:var(--accent-soft)}
+.tablewrap{overflow-x:auto}
+/* chips for transition select */
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.chip{
+  border:1px solid var(--line);background:var(--panel2);color:var(--ink);border-radius:999px;
+  padding:6px 16px;font-family:ui-monospace,Consolas,monospace;font-size:14px;cursor:pointer;
+}
+.chip.sel{border-color:var(--accent);background:var(--accent-soft)}
+.chip.right{border-color:var(--ok);background:var(--ok-soft)}
+.chip.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.chip:disabled{cursor:default;opacity:.85}
+/* progress in mission */
+.mprog{display:flex;gap:4px;margin:14px 0 0}
+.mprog i{height:4px;flex:1;border-radius:2px;background:var(--line)}
+.mprog i.done{background:var(--ok)}
+.mprog i.fail{background:var(--bad)}
+.mprog i.cur{background:var(--accent)}
+/* manual */
+.manual h3{font-size:15px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin:22px 0 8px;color:var(--accent)}
+.manual p,.manual li{font-size:14.5px;max-width:68ch}
+.manual code{background:var(--code-bg);border:1px solid var(--line);border-radius:4px;padding:0 5px;font-size:13px}
+.manual table{border-collapse:collapse;font-size:13.5px}
+.manual table td,.manual table th{border:1px solid var(--line);padding:5px 10px;text-align:left}
+.manual table th{background:var(--panel2)}
+/* boss timer */
+#timer{font-family:ui-monospace,Consolas,monospace;font-weight:700;font-size:15px;color:var(--accent)}
+#timer.low{color:var(--bad)}
+.bigscore{font-size:44px;font-weight:800;letter-spacing:.02em;font-variant-numeric:tabular-nums;margin:8px 0}
+/* token pop animation */
+@keyframes tokpop{0%{transform:scale(1)}45%{transform:scale(1.7)}100%{transform:scale(1)}}
+.tokpop{animation:tokpop .5s ease}
+@media (prefers-reduced-motion: reduce){.tokpop{animation:none}}
+.footnote{color:var(--muted);font-size:12.5px;margin-top:26px;max-width:66ch}
+.credits{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.credits .who{font-size:13px;color:var(--muted)}
+.credits .who b{color:var(--ink)}
+a.clink{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:5px 14px;font-size:13px;font-weight:600;color:var(--ink);text-decoration:none;background:var(--panel)}
+a.clink:hover,a.clink:focus-visible{border-color:var(--accent);color:var(--accent);outline:none}
+a.clink.coffee{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+kbd{font-family:ui-monospace,Consolas,monospace;font-size:12px;border:1px solid var(--line);border-radius:4px;padding:0 5px;background:var(--panel2)}
+</style>
+
+<div id="app">
+  <div id="rail">
+    <div class="brand" onclick="go('home')">BPTM <span>//</span> EXAM TRAINER</div>
+    <div class="spacer"></div>
+    <div class="stat"><span class="rankchip" id="rankchip" title="Your rank climbs the liveness ladder">L0-Live</span></div>
+    <div class="stat" id="xpstat" title="Experience tokens"><svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5" fill="none" stroke="var(--muted)" stroke-width="1.5"/><circle cx="8" cy="8" r="3" fill="var(--tok)" id="xptok"/></svg><b id="xpval">0</b> XP</div>
+    <div class="stat">🔥 <b id="streakval">0</b></div>
+    <span class="rail-sep" aria-hidden="true"></span>
+    <a class="ricon" href="https://www.linkedin.com/in/devansh-devrani/" target="_blank" rel="noopener" aria-label="Devansh Devrani on LinkedIn" title="Devansh on LinkedIn"><svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true"><path d="M4.98 3.5C4.98 4.88 3.87 6 2.5 6S.02 4.88.02 3.5 1.12 1 2.5 1s2.48 1.12 2.48 2.5zM.24 8.31h4.52V23H.24V8.31zM8.31 8.31h4.33v2h.06c.6-1.14 2.08-2.34 4.28-2.34 4.58 0 5.42 3.01 5.42 6.92V23h-4.51v-7.11c0-1.7-.03-3.88-2.37-3.88-2.37 0-2.73 1.85-2.73 3.76V23H8.31V8.31z"/></svg></a>
+    <a class="ricon" href="https://buymeacoffee.com/devanshdevrani31" target="_blank" rel="noopener" aria-label="Buy me a coffee" title="Buy me a coffee"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg></a>
+  </div>
+  <div id="screen"></div>
+</div>
+
+<script>
+'use strict';
+/* ============ persistence & rail ============ */
+const SAVE_KEY='bptm_war_v1';
+let S=load();
+function load(){
+  try{const s=JSON.parse(localStorage.getItem(SAVE_KEY));if(s&&s.modes)return s}catch(e){}
+  return {xp:0,streak:0,best:0,modes:{},boss:null};
+}
+function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(S))}catch(e){}}
+function modeStat(id){if(!S.modes[id])S.modes[id]={seen:0,right:0};return S.modes[id]}
+const RANKS=[[0,'L0-Live'],[60,'L1-Live'],[150,'L2-Live'],[260,'L3-Live'],[400,'L4-Live'],[560,'Quasi-Live'],[780,'Strong-Live'],[1050,'Structurally Sound'],[1400,'Sound'],[1900,'Home State']];
+function rank(){let r=RANKS[0][1];for(const[t,n]of RANKS)if(S.xp>=t)r=n;return r}
+function rail(){
+  document.getElementById('xpval').textContent=S.xp;
+  document.getElementById('streakval').textContent=S.streak;
+  document.getElementById('rankchip').textContent=rank();
+}
+function award(ok,pts){
+  if(ok){S.xp+=pts+Math.min(S.streak,5);S.streak++;S.best=Math.max(S.best,S.streak);
+    const t=document.getElementById('xptok');t.classList.remove('tokpop');void t.getBoundingClientRect();t.classList.add('tokpop');
+  }else S.streak=0;
+  save();rail();
+}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function sample(a,n){return shuffle(a).slice(0,n)}
+
+/* ============ PETRI NET ENGINE ============
+   Firing rule per lecture Def 2.5 (PT nets), with capacity checked AFTER
+   input consumption for places that are both input and output of t —
+   this matches the official SS23 sample-solution reachability table.
+   EC nets: every place has capacity 1, every arc weight 1.            */
+function netMaps(net){
+  if(net._m)return net._m;
+  const inA={},outA={};                       // inA[t]=[{p,w}] arcs p->t ; outA[t]=[{p,w}]
+  net.trans.forEach(t=>{inA[t.id]=[];outA[t.id]=[]});
+  const cap={},places=net.places.map(p=>p.id);
+  net.places.forEach(p=>{cap[p.id]=(net.type==='EC')?1:(p.cap!=null?p.cap:Infinity)});
+  net.arcs.forEach(a=>{
+    const w=a.w||1;
+    if(inA[a.from]!==undefined) outA[a.from].push({p:a.to,w});   // t -> p
+    else inA[a.to].push({p:a.from,w});                            // p -> t
+  });
+  net._m={inA,outA,cap,places};
+  return net._m;
+}
+function mkey(M,places){return places.map(p=>M[p]||0).join(',')}
+function enabledSet(net,M){
+  const {inA,outA,cap}=netMaps(net);
+  return net.trans.filter(t=>{
+    for(const {p,w} of inA[t.id]) if((M[p]||0)<w) return false;
+    // capacity check on marking after inputs consumed
+    const tmp={};for(const {p,w} of inA[t.id])tmp[p]=(tmp[p]||0)+w;
+    for(const {p,w} of outA[t.id]){
+      const after=(M[p]||0)-(tmp[p]||0)+w;
+      if(after>cap[p]) return false;
+    }
+    return true;
+  }).map(t=>t.id);
+}
+function fire(net,M,tid){
+  const {inA,outA}=netMaps(net);
+  const M2=Object.assign({},M);
+  for(const {p,w} of inA[tid]) M2[p]=(M2[p]||0)-w;
+  for(const {p,w} of outA[tid]) M2[p]=(M2[p]||0)+w;
+  return M2;
+}
+/* BFS reachability graph. Returns {order:[keys], markings:{key:M}, edges:[{from,t,to}], out:{key:[{t,to}]}, bounded, kbound, dead:[keys]} */
+function explore(net){
+  if(net._g)return net._g;
+  const {places}=netMaps(net);
+  const M0={};net.places.forEach(p=>{M0[p.id]=(net.m0&&net.m0[p.id])||0});
+  const k0=mkey(M0,places);
+  const markings={[k0]:M0},order=[k0],out={[k0]:[]},edges=[];
+  const q=[k0];let bounded=true;
+  while(q.length){
+    const k=q.shift(),M=markings[k];
+    for(const t of enabledSet(net,M)){
+      const M2=fire(net,M,t),k2=mkey(M2,places);
+      if(!(k2 in markings)){
+        if(order.length>4000||Object.values(M2).some(v=>v>40)){bounded=false;continue}
+        markings[k2]=M2;order.push(k2);out[k2]=[];q.push(k2);
+      }
+      edges.push({from:k,t,to:k2});out[k].push({t,to:k2});
+    }
+  }
+  const dead=order.filter(k=>out[k].length===0);
+  let kbound=0;order.forEach(k=>{for(const p of places)kbound=Math.max(kbound,markings[k][p]||0)});
+  net._g={order,markings,edges,out,bounded,kbound,dead,places,k0};
+  return net._g;
+}
+/* strict liveness class per transition: 'L0'|'L1'|'L3'|'L4' (L2 not distinguished, per lecture practice) */
+function liveness(net){
+  if(net._live)return net._live;
+  const g=explore(net);
+  const res={};
+  // reachable-from map for cycle detection: forward BFS from each node (graphs here are small)
+  const reachFrom={};
+  for(const k of g.order){
+    const seen=new Set([k]),q=[k];
+    while(q.length){const c=q.shift();for(const e of g.out[c])if(!seen.has(e.to)){seen.add(e.to);q.push(e.to)}}
+    reachFrom[k]=seen;
+  }
+  for(const t of net.trans){
+    const id=t.id;
+    const eOn=g.edges.filter(e=>e.t===id);
+    if(eOn.length===0){res[id]='L0';continue}
+    // L3: t lies on a cycle (target of a t-edge can get back to its source)
+    const l3=eOn.some(e=>reachFrom[e.to].has(e.from));
+    // L4: from EVERY reachable marking, a marking enabling t is reachable
+    const enablers=new Set(g.order.filter(k=>enabledSet(net,g.markings[k]).includes(id)));
+    const l4=g.order.every(k=>[...reachFrom[k]].some(x=>enablers.has(x)));
+    res[id]=l4?'L4':(l3?'L3':'L1');
+  }
+  net._live=res;return res;
+}
+function netLivenessClass(net){
+  const lv=liveness(net),vals=net.trans.map(t=>lv[t.id]);
+  if(vals.every(v=>v==='L4'))return 'live';
+  if(vals.some(v=>v==='L4'))return 'quasi';
+  return 'notlive';
+}
+/* structural soundness: >=1 node w/o incoming, >=1 w/o outgoing, every node on a path initial->final */
+function structSound(net){
+  const nodes=[...net.places.map(p=>p.id),...net.trans.map(t=>t.id)];
+  const succ={},pred={};nodes.forEach(n=>{succ[n]=[];pred[n]=[]});
+  net.arcs.forEach(a=>{succ[a.from].push(a.to);pred[a.to].push(a.from)});
+  const inits=nodes.filter(n=>pred[n].length===0),finals=nodes.filter(n=>succ[n].length===0);
+  if(!inits.length||!finals.length)return{sound:false,inits,finals,reason:!inits.length?'no initial node (every node has an incoming edge)':'no final node (every node has an outgoing edge)'};
+  const fwd=new Set(inits),q1=[...inits];
+  while(q1.length){const c=q1.shift();for(const n of succ[c])if(!fwd.has(n)){fwd.add(n);q1.push(n)}}
+  const bwd=new Set(finals),q2=[...finals];
+  while(q2.length){const c=q2.shift();for(const n of pred[c])if(!bwd.has(n)){bwd.add(n);q2.push(n)}}
+  const off=nodes.filter(n=>!(fwd.has(n)&&bwd.has(n)));
+  return{sound:off.length===0,inits,finals,off,reason:off.length?off.join(', ')+' not on a path from initial to final node':''};
+}
+
+/* ============ SVG RENDERERS ============ */
+/* Petri net: places {id,x,y,cap}, trans {id,x,y}, arcs {from,to,w,bend} */
+function drawNet(net,M,opt){
+  opt=opt||{};
+  const w=net.w||560,h=net.h||220,R=16,TW=12,TH=34;
+  const pos={};net.places.forEach(p=>pos[p.id]={x:p.x,y:p.y,kind:'p'});net.trans.forEach(t=>pos[t.id]={x:t.x,y:t.y,kind:'t'});
+  let s=`<svg viewBox="0 0 ${w} ${h}" width="${Math.min(w,opt.maxw||720)}" role="img" aria-label="Petri net">`;
+  s+=`<defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--ink)"/></marker><marker id="arrh" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--accent)"/></marker></defs>`;
+  for(const a of net.arcs){
+    const A=pos[a.from],B=pos[a.to];
+    const rA=A.kind==='p'?R+2:20,rB=B.kind==='p'?R+4:20;
+    const col=a.hl?'var(--accent)':'var(--ink)',mk=a.hl?'arrh':'arr',sw=a.hl?2:1.5;
+    let lx,ly; // weight-label position, always ON the arc
+    if(a.via&&a.via.length){
+      // polyline routing through explicit waypoints
+      let ux=a.via[0][0]-A.x,uy=a.via[0][1]-A.y,L=Math.hypot(ux,uy)||1;ux/=L;uy/=L;
+      const sx=A.x+ux*rA,sy=A.y+uy*rA;
+      const last=a.via[a.via.length-1];
+      let vx=B.x-last[0],vy=B.y-last[1];L=Math.hypot(vx,vy)||1;vx/=L;vy/=L;
+      const ex=B.x-vx*rB,ey=B.y-vy*rB;
+      s+=`<path d="M${sx} ${sy} L${a.via.map(p=>p.join(' ')).join(' L')} L${ex} ${ey}" fill="none" stroke="${col}" stroke-width="${sw}" marker-end="url(#${mk})"/>`;
+      if(a.via.length>1){const m1=a.via[Math.floor((a.via.length-1)/2)],m2=a.via[Math.ceil((a.via.length-1)/2+0.001)]||m1;lx=(m1[0]+m2[0])/2;ly=(m1[1]+m2[1])/2;}
+      else{lx=a.via[0][0];ly=a.via[0][1];}
+    }else{
+      const dx=B.x-A.x,dy=B.y-A.y,L=Math.hypot(dx,dy)||1,ux=dx/L,uy=dy/L;
+      const x1=A.x+ux*rA,y1=A.y+uy*rA,x2=B.x-ux*rB,y2=B.y-uy*rB;
+      if(a.bend){
+        const cx=(x1+x2)/2-uy*a.bend,cy=(y1+y2)/2+ux*a.bend;
+        s+=`<path d="M${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}" fill="none" stroke="${col}" stroke-width="${sw}" marker-end="url(#${mk})"/>`;
+        lx=0.25*x1+0.5*cx+0.25*x2;ly=0.25*y1+0.5*cy+0.25*y2; // quadratic curve at t=0.5
+      }else{
+        s+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col}" stroke-width="${sw}" marker-end="url(#${mk})"/>`;
+        lx=(x1+x2)/2;ly=(y1+y2)/2;
+      }
+    }
+    if(a.lxy){lx=a.lxy[0];ly=a.lxy[1]}
+    if(a.w&&a.w>1){
+      s+=`<circle cx="${lx}" cy="${ly}" r="9.5" fill="var(--panel)" stroke="var(--accent)" stroke-width="1.2"/><text x="${lx}" y="${ly+4}" text-anchor="middle" font-size="12" font-weight="700" fill="var(--accent)" font-family="ui-monospace,Consolas,monospace">${a.w}</text>`;
+    }
+  }
+  for(const p of net.places){
+    s+=`<circle cx="${p.x}" cy="${p.y}" r="${R}" fill="var(--panel)" stroke="${p.hl?'var(--accent)':'var(--ink)'}" stroke-width="${p.hl?2.2:1.6}"/>`;
+    const n=(M&&M[p.id])||0;
+    if(n===1)s+=`<circle cx="${p.x}" cy="${p.y}" r="4.5" fill="var(--tok)"/>`;
+    else if(n===2)s+=`<circle cx="${p.x-5}" cy="${p.y}" r="4" fill="var(--tok)"/><circle cx="${p.x+5}" cy="${p.y}" r="4" fill="var(--tok)"/>`;
+    else if(n===3)s+=`<circle cx="${p.x-5}" cy="${p.y+3}" r="4" fill="var(--tok)"/><circle cx="${p.x+5}" cy="${p.y+3}" r="4" fill="var(--tok)"/><circle cx="${p.x}" cy="${p.y-5}" r="4" fill="var(--tok)"/>`;
+    else if(n>3)s+=`<text x="${p.x}" y="${p.y+5}" text-anchor="middle" font-size="13" font-weight="700" fill="var(--tok)" font-family="ui-monospace,Consolas,monospace">${n}</text>`;
+    s+=`<text x="${p.x}" y="${p.y+R+14}" text-anchor="middle" font-size="12" fill="var(--muted)" font-family="ui-monospace,Consolas,monospace">${p.id}</text>`;
+    if(p.cap!=null&&net.type!=='EC')s+=`<text x="${p.x+R+4}" y="${p.y-R+2}" font-size="11" font-weight="700" fill="var(--accent)" font-family="ui-monospace,Consolas,monospace">C=${p.cap}</text>`;
+  }
+  for(const t of net.trans){
+    s+=`<rect x="${t.x-TW/2}" y="${t.y-TH/2}" width="${TW}" height="${TH}" fill="${t.hl?'var(--accent)':'var(--ink)'}" rx="1.5"/>`;
+    s+=`<text x="${t.x}" y="${t.y+TH/2+14}" text-anchor="middle" font-size="12" fill="var(--muted)" font-family="ui-monospace,Consolas,monospace">${t.id}</text>`;
+  }
+  return s+'</svg>';
+}
+/* BPMN mini-renderer: items are primitives with absolute coords */
+function bpmn(w,h,items){
+  let s=`<svg viewBox="0 0 ${w} ${h}" width="${Math.min(w,720)}" role="img" aria-label="BPMN model">`;
+  s+=`<defs><marker id="barr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--ink)"/></marker></defs>`;
+  const F='font-family="system-ui,sans-serif"';
+  for(const it of items){
+    if(it.k==='start')s+=`<circle cx="${it.x}" cy="${it.y}" r="13" fill="var(--panel)" stroke="var(--ink)" stroke-width="1.6"/>`;
+    else if(it.k==='end')s+=`<circle cx="${it.x}" cy="${it.y}" r="13" fill="var(--panel)" stroke="var(--ink)" stroke-width="3"/>`;
+    else if(it.k==='task'){
+      const tw=it.w||64,th=34;
+      s+=`<rect x="${it.x-tw/2}" y="${it.y-th/2}" width="${tw}" height="${th}" rx="7" fill="var(--panel)" stroke="var(--ink)" stroke-width="1.6"/><text x="${it.x}" y="${it.y+5}" text-anchor="middle" font-size="14" font-weight="600" fill="var(--ink)" ${F}>${esc(it.t)}</text>`;
+    }else if(it.k==='gw'){
+      const r=17;
+      s+=`<path d="M${it.x} ${it.y-r} L${it.x+r} ${it.y} L${it.x} ${it.y+r} L${it.x-r} ${it.y} Z" fill="var(--panel)" stroke="var(--ink)" stroke-width="1.6"/>`;
+      if(it.t==='X')s+=`<text x="${it.x}" y="${it.y+5.5}" text-anchor="middle" font-size="16" font-weight="700" fill="var(--ink)" ${F}>×</text>`;
+      else if(it.t==='+')s+=`<text x="${it.x}" y="${it.y+6}" text-anchor="middle" font-size="18" font-weight="700" fill="var(--ink)" ${F}>+</text>`;
+      else if(it.t==='O')s+=`<circle cx="${it.x}" cy="${it.y}" r="7" fill="none" stroke="var(--ink)" stroke-width="1.8"/>`;
+      else if(it.t==='E')s+=`<circle cx="${it.x}" cy="${it.y}" r="9" fill="none" stroke="var(--ink)" stroke-width="1.2"/><path d="M${it.x} ${it.y-5.5} L${it.x+5.2} ${it.y-1.7} L${it.x+3.2} ${it.y+4.5} L${it.x-3.2} ${it.y+4.5} L${it.x-5.2} ${it.y-1.7} Z" fill="none" stroke="var(--ink)" stroke-width="1.2"/>`;
+    }else if(it.k==='arrow'){
+      if(it.pts){
+        let d='M'+it.pts.map(p=>p.join(' ')).join(' L');
+        s+=`<path d="${d}" fill="none" stroke="var(--ink)" stroke-width="1.5" marker-end="url(#barr)"/>`;
+        if(it.t){const lp=it.lp||it.pts[Math.floor(it.pts.length/2)];s+=`<text x="${lp[0]}" y="${lp[1]-6}" text-anchor="middle" font-size="12" fill="var(--muted)" ${F}>${esc(it.t)}</text>`}
+      }
+    }else if(it.k==='note'){
+      s+=`<text x="${it.x}" y="${it.y}" text-anchor="${it.a||'middle'}" font-size="12" fill="var(--muted)" font-style="italic" ${F}>${esc(it.t)}</text>`;
+    }
+  }
+  return s+'</svg>';
+}
+/* small helper: horizontal arrow between two node borders */
+function ar(x1,y1,x2,y2,t,lp){return {k:'arrow',pts:[[x1,y1],[x2,y2]],t,lp}}
+function arp(pts,t,lp){return {k:'arrow',pts,t,lp}}
+
+/* ============ ROUTER ============ */
+const SCREEN=document.getElementById('screen');
+let current=null;
+function go(name,arg){
+  current=name;window.scrollTo(0,0);
+  if(name==='home')renderHome();
+  else if(name==='mission')startMission(arg);
+  else if(name==='reach')startReach(arg);
+  else if(name==='manual')renderManual();
+  else if(name==='boss')startBoss();
+}
+/* ============ NET LIBRARY ============ */
+const NETS={
+  SEQ:{type:'EC',w:490,h:165,
+    places:[{id:'i',x:45,y:80},{id:'p1',x:245,y:80},{id:'o',x:445,y:80}],
+    trans:[{id:'t1',x:145,y:80},{id:'t2',x:345,y:80}],
+    arcs:[{from:'i',to:'t1'},{from:'t1',to:'p1'},{from:'p1',to:'t2'},{from:'t2',to:'o'}],
+    m0:{i:1}},
+  CHOICE:{type:'EC',w:500,h:225,
+    places:[{id:'i',x:50,y:110},{id:'p1',x:250,y:55},{id:'p2',x:250,y:165},{id:'o',x:450,y:110}],
+    trans:[{id:'t1',x:150,y:55},{id:'t2',x:150,y:165},{id:'t3',x:350,y:55},{id:'t4',x:350,y:165}],
+    arcs:[{from:'i',to:'t1'},{from:'i',to:'t2'},{from:'t1',to:'p1'},{from:'t2',to:'p2'},{from:'p1',to:'t3'},{from:'p2',to:'t4'},{from:'t3',to:'o'},{from:'t4',to:'o'}],
+    m0:{i:1}},
+  AND:{type:'EC',w:600,h:225,
+    places:[{id:'i',x:45,y:110},{id:'p1',x:210,y:55},{id:'p2',x:210,y:165},{id:'p3',x:380,y:55},{id:'p4',x:380,y:165},{id:'o',x:555,y:110}],
+    trans:[{id:'t1',x:125,y:110},{id:'t2',x:295,y:55},{id:'t3',x:295,y:165},{id:'t4',x:465,y:110}],
+    arcs:[{from:'i',to:'t1'},{from:'t1',to:'p1'},{from:'t1',to:'p2'},{from:'p1',to:'t2'},{from:'p2',to:'t3'},{from:'t2',to:'p3'},{from:'t3',to:'p4'},{from:'p3',to:'t4'},{from:'p4',to:'t4'},{from:'t4',to:'o'}],
+    m0:{i:1}},
+  CYCLE:{type:'EC',w:560,h:215,
+    places:[{id:'i',x:60,y:80},{id:'p1',x:280,y:80},{id:'o',x:500,y:80}],
+    trans:[{id:'tA',x:170,y:80},{id:'tB',x:390,y:80},{id:'t*',x:280,y:165}],
+    arcs:[{from:'i',to:'tA'},{from:'tA',to:'p1'},{from:'p1',to:'tB'},{from:'tB',to:'o'},{from:'o',to:'t*',bend:40},{from:'t*',to:'i',bend:40}],
+    m0:{i:1}},
+  DEAD:{type:'EC',w:540,h:225,
+    places:[{id:'i',x:55,y:110},{id:'p1',x:275,y:55},{id:'p2',x:275,y:165},{id:'o',x:495,y:110}],
+    trans:[{id:'t1',x:165,y:55},{id:'t2',x:165,y:165},{id:'t3',x:385,y:110}],
+    arcs:[{from:'i',to:'t1'},{from:'i',to:'t2'},{from:'t1',to:'p1'},{from:'t2',to:'p2'},{from:'p1',to:'t3'},{from:'p2',to:'t3'},{from:'t3',to:'o'}],
+    m0:{i:1}},
+  LLOCK:{type:'EC',w:640,h:225,
+    places:[{id:'i',x:50,y:110},{id:'p1',x:230,y:110},{id:'p2',x:410,y:110},{id:'o',x:585,y:110}],
+    trans:[{id:'t1',x:140,y:110},{id:'t2',x:320,y:60},{id:'t3',x:320,y:170},{id:'t4',x:500,y:110}],
+    arcs:[{from:'i',to:'t1'},{from:'t1',to:'p1'},{from:'p1',to:'t2',bend:24},{from:'t2',to:'p2',bend:24},{from:'p2',to:'t3',bend:24},{from:'t3',to:'p1',bend:24},{from:'p2',to:'t4'},{from:'t4',to:'o'}],
+    m0:{i:1}},
+  QUASI:{type:'EC',w:640,h:200,
+    places:[{id:'p1',x:80,y:80},{id:'p2',x:280,y:80},{id:'p3',x:410,y:80},{id:'p4',x:590,y:80}],
+    trans:[{id:'tA',x:180,y:40},{id:'tB',x:180,y:135},{id:'tC',x:500,y:80}],
+    arcs:[{from:'p1',to:'tA',bend:20},{from:'tA',to:'p2',bend:20},{from:'p2',to:'tB',bend:20},{from:'tB',to:'p1',bend:20},{from:'p3',to:'tC'},{from:'tC',to:'p4'}],
+    m0:{p1:1}},
+  PTLEC:{type:'PT',w:520,h:300,
+    places:[{id:'p1',x:190,y:60},{id:'p2',x:190,y:180},{id:'p3',x:430,y:60,cap:1},{id:'p4',x:430,y:180}],
+    trans:[{id:'t1',x:70,y:120},{id:'t2',x:310,y:60},{id:'t3',x:310,y:180}],
+    arcs:[{from:'p4',to:'t1',w:2,via:[[430,255],[70,255]]},{from:'t1',to:'p1'},{from:'t1',to:'p2'},{from:'p1',to:'t2'},{from:'t2',to:'p3'},{from:'t2',to:'p4'},{from:'p2',to:'t3'},{from:'t3',to:'p4'}],
+    m0:{p4:2}},
+  EX22:{type:'PT',w:560,h:310,
+    places:[{id:'p1',x:210,y:60},{id:'p2',x:210,y:190},{id:'p3',x:430,y:60,cap:2},{id:'p4',x:430,y:190},{id:'p5',x:60,y:190}],
+    trans:[{id:'t1',x:110,y:120},{id:'t2',x:320,y:60},{id:'t3',x:320,y:190}],
+    arcs:[{from:'p1',to:'t2'},{from:'p2',to:'t3'},{from:'p4',to:'t1',w:2,via:[[430,262],[110,262]]},{from:'t1',to:'p1'},{from:'t1',to:'p2'},{from:'t2',to:'p3'},{from:'t2',to:'p4',bend:-18},{from:'t3',to:'p4'},{from:'p5',to:'t1'},{from:'t3',to:'p3',bend:18}],
+    m0:{p4:2,p5:1},
+    formal:'N = (P, T, F, C, W, M0)\nP = {p1, p2, p3, p4, p5}\nT = {t1, t2, t3}\nF = {(p1,t2), (p2,t3), (p4,t1), (t1,p1), (t1,p2),\n     (t2,p3), (t2,p4), (t3,p4), (p5,t1), (t3,p3)}\nC = {(p3, 2)}\nW = {(p4,t1, 2)}\nM0 = {(p4, 2), (p5, 1)}'},
+  EX23:{type:'PT',w:640,h:300,
+    places:[{id:'p1',x:180,y:60},{id:'p2',x:180,y:210},{id:'p3',x:60,y:135},{id:'p4',x:600,y:60},{id:'p5',x:300,y:135},{id:'p6',x:440,y:60}],
+    trans:[{id:'t1',x:310,y:60},{id:'t2',x:120,y:135},{id:'t3',x:240,y:90},{id:'t4',x:440,y:210}],
+    arcs:[{from:'p1',to:'t3'},{from:'p2',to:'t1',w:3,via:[[24,210],[24,24],[310,24]],lxy:[24,120]},{from:'p2',to:'t4',bend:22},{from:'p3',to:'t2'},{from:'p5',to:'t4',bend:14},{from:'p6',to:'t1',bend:16},{from:'t1',to:'p6',bend:16},{from:'t2',to:'p1'},{from:'t2',to:'p5',bend:26},{from:'t3',to:'p6',bend:15},{from:'t4',to:'p2',w:2,bend:22}],
+    m0:{p2:1,p3:1},
+    formal:'N = (P, T, F, C, W, M0)\nP = {p1, p2, p3, p4, p5, p6}\nT = {t1, t2, t3, t4}\nF = {(p1,t3), (p2,t1), (p2,t4), (p3,t2), (p5,t4),\n     (p6,t1), (t1,p6), (t2,p1), (t2,p5), (t3,p6), (t4,p2)}\nC = {(p2, 2)}\nW = {(p2,t1, 3), (t4,p2, 2)}\nM0 = {(p2, 1), (p3, 1)}\n\nNote: p4 has no arcs in F. It is part of P anyway,\nexactly as the exam defined it.'},
+};
+// EX23 needs p2 capacity 2 drawn + enforced:
+NETS.EX23.places.find(p=>p.id==='p2').cap=2;
+
+/* ============ NET FORGE: construction tasks, engine-verified ============ */
+const FORGE_BASES={
+  CHAIN2:{type:'EC',w:520,h:235,
+    places:[{id:'i',x:60,y:80},{id:'p1',x:260,y:80},{id:'o',x:460,y:80}],
+    trans:[{id:'ta',x:160,y:80},{id:'tb',x:360,y:80}],
+    arcs:[{from:'i',to:'ta'},{from:'ta',to:'p1'},{from:'p1',to:'tb'},{from:'tb',to:'o'}],
+    m0:{i:1}},
+  CHAIN3:{type:'EC',w:640,h:235,
+    places:[{id:'i',x:50,y:80},{id:'p1',x:230,y:80},{id:'p2',x:410,y:80},{id:'o',x:590,y:80}],
+    trans:[{id:'ta',x:140,y:80},{id:'tb',x:320,y:80},{id:'tc',x:500,y:80}],
+    arcs:[{from:'i',to:'ta'},{from:'ta',to:'p1'},{from:'p1',to:'tb'},{from:'tb',to:'p2'},{from:'p2',to:'tc'},{from:'tc',to:'o'}],
+    m0:{i:1}},
+  SOURCE:{type:'PT',w:520,h:235,
+    places:[{id:'p1',x:200,y:80},{id:'o',x:440,y:80}],
+    trans:[{id:'ts',x:80,y:80},{id:'t2',x:320,y:80}],
+    arcs:[{from:'ts',to:'p1'},{from:'p1',to:'t2'},{from:'t2',to:'o'}],
+    m0:{o:1}},
+  DEADB:{type:'EC',w:540,h:245,
+    places:[{id:'i',x:55,y:120},{id:'p1',x:275,y:65},{id:'p2',x:275,y:175},{id:'o',x:495,y:120}],
+    trans:[{id:'t1',x:165,y:65},{id:'t2',x:165,y:175},{id:'t3',x:385,y:120}],
+    arcs:[{from:'i',to:'t1'},{from:'i',to:'t2'},{from:'t1',to:'p1'},{from:'t2',to:'p2'},{from:'p1',to:'t3'},{from:'p2',to:'t3'},{from:'t3',to:'o'}],
+    m0:{i:1}},
+  TWOCYC:{type:'EC',w:660,h:245,
+    places:[{id:'p1',x:80,y:80},{id:'p2',x:260,y:80},{id:'p3',x:420,y:80},{id:'p4',x:600,y:80}],
+    trans:[{id:'t1',x:170,y:80},{id:'t2',x:170,y:165}],
+    arcs:[{from:'p1',to:'t1'},{from:'t1',to:'p2'},{from:'p2',to:'t2',bend:24},{from:'t2',to:'p1',bend:24}],
+    m0:{p1:1,p3:1}},
+};
+FORGE_BASES.TWOCYC.trans.push({id:'t3',x:510,y:80});
+FORGE_BASES.TWOCYC.arcs.push({from:'p3',to:'t3'},{from:'t3',to:'p4'});
+function variant(base,add){
+  return {type:base.type,w:base.w,h:base.h,
+    places:[...base.places,...(add.places||[]).map(p=>({...p,hl:1}))],
+    trans:[...base.trans,...(add.trans||[]).map(t=>({...t,hl:1}))],
+    arcs:[...base.arcs,...(add.arcs||[]).map(a=>({...a,hl:1}))],
+    m0:Object.assign({},base.m0)};
+}
+function forgeQ(spec){
+  const base=FORGE_BASES[spec.base];
+  const opts=spec.vars.map(v=>{
+    const net=variant(base,v.add);
+    return {t:v.cap,svgOpt:drawNet(net,net.m0,{maxw:320}),ok:!!spec.pred(net)};
+  });
+  if(opts.filter(o=>o.ok).length!==1)console.warn('forge ambiguity in: '+spec.q);
+  return {type:'mc',q:spec.q,note:spec.note,svg:drawNet(base,base.m0),opts,why:spec.why,mode:'nets'};
+}
+const FORGE_SPECS=[
+ {base:'CHAIN2',q:'Make this net LIVE (every transition L4-live). Delete nothing, only add. Which addition works?',
+  note:'Exam phrasing from Problem 2. The additions are drawn in gold.',
+  pred:net=>netLivenessClass(net)==='live',
+  vars:[
+   {cap:'Add transition t*: o → t* → i',add:{trans:[{id:'t*',x:260,y:170}],arcs:[{from:'o',to:'t*'},{from:'t*',to:'i'}]}},
+   {cap:'Add transition tr: p1 → tr → i',add:{trans:[{id:'tr',x:160,y:170}],arcs:[{from:'p1',to:'tr'},{from:'tr',to:'i'}]}},
+   {cap:'Add transition tr: o → tr → p1',add:{trans:[{id:'tr',x:360,y:170}],arcs:[{from:'o',to:'tr'},{from:'tr',to:'p1'}]}},
+   {cap:'Add a flow o → ta',add:{arcs:[{from:'o',to:'ta',via:[[460,170],[160,170]]}]}},
+  ],
+  why:'Only the full restart cycle o → t* → i lets EVERY transition fire again forever. Looping back into the middle (options 2 and 3) leaves the transition outside the cycle at L1. A flow o → ta makes ta need a token in o at the start: instant deadlock. This is the lecture trick, and its price is that the net is no longer structurally sound.'},
+ {base:'CHAIN3',q:'Make transition tb L3-live but NOT L4-live. The net must stay structurally sound. Delete nothing, only add.',
+  note:'Straight from SS23 Problem 2c.',
+  pred:net=>liveness(net)['tb']==='L3'&&structSound(net).sound,
+  vars:[
+   {cap:'Add transition tr: p2 → tr → p1 (loop around tb, exit via tc)',add:{trans:[{id:'tr',x:320,y:170}],arcs:[{from:'p2',to:'tr'},{from:'tr',to:'p1'}]}},
+   {cap:'Add transition tr: o → tr → i (full restart loop)',add:{trans:[{id:'tr',x:320,y:190}],arcs:[{from:'o',to:'tr',bend:30},{from:'tr',to:'i',bend:30}]}},
+   {cap:'Add transition tr: p2 → tr → p2 (self-loop on p2)',add:{trans:[{id:'tr',x:410,y:170}],arcs:[{from:'p2',to:'tr',bend:20},{from:'tr',to:'p2',bend:20}]}},
+   {cap:'Add a flow tb → i (tb also refills i)',add:{arcs:[{from:'tb',to:'i',via:[[320,16],[50,16]]}]}},
+  ],
+  why:'The loop p1 → tb → p2 → tr → p1 lets tb fire forever IF the token keeps choosing tr, while tc offers a permanent exit: that is exactly L3. The restart loop (option 2) makes tb L4 and destroys structural soundness (o gets an outgoing edge, i an incoming one). The self-loop makes TR loop, not tb. Option 4 creates the loop but i gains an incoming edge, so no initial node remains.'},
+ {base:'SOURCE',q:'ts has no input places, so it is enabled forever and floods p1. Make the net BOUNDED by adding only flows (no places, no transitions, no weights). The result must stay free of deadlocks.',
+  pred:net=>{const g=explore(net);return g.bounded&&g.dead.length===0},
+  vars:[
+   {cap:'Add a flow o → ts',add:{arcs:[{from:'o',to:'ts',via:[[440,170],[80,170]]}]}},
+   {cap:'Add a flow p1 → ts',add:{arcs:[{from:'p1',to:'ts',bend:-45}]}},
+   {cap:'Add a flow t2 → p1',add:{arcs:[{from:'t2',to:'p1',bend:-45}]}},
+   {cap:'Add a flow ts → o',add:{arcs:[{from:'ts',to:'o',via:[[80,16],[440,16]]}]}},
+  ],
+  why:'o → ts closes the circuit: ts now consumes the single circulating token, so the net becomes a 1-bounded live cycle. p1 → ts looks similar but at M0 the only token sits in o, nothing is enabled, instant deadlock. The other two flows leave ts source-enabled, so p1 (or o) still grows without limit.'},
+ {base:'DEADB',q:'This net deadlocks: t1/t2 split like an XOR but t3 joins like an AND. Add whatever you want (delete nothing) so that EVERY run ends with the single token in o.',
+  pred:net=>{const g=explore(net);const {places}=netMaps(net);const oKey=places.map(p=>p==='o'?1:0).join(',');return g.dead.length>0&&g.dead.every(k=>k===oKey)},
+  vars:[
+   {cap:'Add t4: p1 → t4 → o and t5: p2 → t5 → o',add:{trans:[{id:'t4',x:385,y:30},{id:'t5',x:385,y:210}],arcs:[{from:'p1',to:'t4'},{from:'t4',to:'o'},{from:'p2',to:'t5'},{from:'t5',to:'o'}]}},
+   {cap:'Add t4 with inputs p1 AND p2 and output o',add:{trans:[{id:'t4',x:385,y:30}],arcs:[{from:'p1',to:'t4'},{from:'p2',to:'t4',bend:-60},{from:'t4',to:'o'}]}},
+   {cap:'Add a flow t1 → p2',add:{arcs:[{from:'t1',to:'p2',bend:-30}]}},
+   {cap:'Add a flow o → t3',add:{arcs:[{from:'o',to:'t3',bend:40}]}},
+  ],
+  why:'Each branch needs its own way into o, hence one XOR-join transition per branch. Option 2 clones the broken AND-join. Option 3 fixes only the t1 path; after t2 the token still strands in p2. Option 4 gives t3 a third input that is never filled in time. Note t3 stays L0 in the correct answer too. The task said deadlock-free, not free of dead transitions.'},
+ {base:'TWOCYC',q:'Left part cycles forever, right part fires t3 once and dies. Make the whole net LIVE while ALWAYS exactly two tokens stay in the net. Only add transitions and/or flows.',
+  note:'The “always n tokens” construction appeared in the 2022 sample exam, 2d.',
+  pred:net=>{const g=explore(net);if(!g.bounded)return false;const tot=k=>Object.values(g.markings[k]).reduce((a,b)=>a+b,0);return netLivenessClass(net)==='live'&&g.order.every(k=>tot(k)===2)},
+  vars:[
+   {cap:'Add t4: p4 → t4 → p3 (close the right cycle)',add:{trans:[{id:'t4',x:510,y:165}],arcs:[{from:'p4',to:'t4'},{from:'t4',to:'p3'}]}},
+   {cap:'Add t4: p4 → t4 → p4 (self-loop on p4)',add:{trans:[{id:'t4',x:600,y:165}],arcs:[{from:'p4',to:'t4',bend:20},{from:'t4',to:'p4',bend:20}]}},
+   {cap:'Add a flow p4 → t1',add:{arcs:[{from:'p4',to:'t1',via:[[600,18],[170,18]]}]}},
+   {cap:'Add t4: p3 → t4 → p3 (self-loop on p3)',add:{trans:[{id:'t4',x:420,y:165}],arcs:[{from:'p3',to:'t4',bend:20},{from:'t4',to:'p3',bend:20}]}},
+  ],
+  why:'Closing the second cycle keeps every transition on a loop (all L4) and every transition consumes one token and produces one, so the total stays at exactly 2. The self-loops leave t3 mortal: once the right token moves on (or never moves), some transition is not L4. The flow p4 → t1 makes t1 consume two tokens and produce one, so the count sinks and the net dies.'},
+];
+
+/* ============ MODE 2: generated net questions ============ */
+function fmtM(net,M){const {places}=netMaps(net);return '('+places.map(p=>M[p]||0).join(', ')+')'}
+function livWhy(cls,id){
+  return {
+    L0:`${id} is never enabled in any reachable marking, so it can never fire. That is a dead transition. Background: liveness is judged per transition by asking what firing futures are still possible.`,
+    L1:`${id} can fire at least once, but it lies on no cycle of the reachability graph. Once its moment has passed it can never fire again, and this is already determined from the start.`,
+    L3:`${id} lies on a cycle of the reachability graph. An infinite firing sequence through it EXISTS, but other runs leave the cycle or end. "Can fire forever" is L3; "will always stay fireable" would be L4.`,
+    L4:`From every reachable marking it is always possible to reach a marking that enables ${id} again. Whatever happens, ${id} can keep firing. That is the strongest level, L4.`
+  }[cls];
+}
+function buildNetQuestions(){
+  const B=[];
+  const push=q=>{q.mode='nets';B.push(q)};
+  const liveOpts=(net,tid)=>{
+    const cls=liveness(net)[tid];
+    return {type:'mc',q:`What is the strict liveness of transition ${tid}?`,
+      svg:drawNet(net,net.m0),
+      opts:['L0','L1','L3','L4'].map(c=>({t:`${c}-live: `+({L0:'can never fire',L1:'fires at least once, but only a determined finite number of times',L3:'CAN fire infinitely often for some sequence (a loop with an exit)',L4:'stays fireable forever, from every reachable marking'}[c]),ok:c===cls})),
+      why:livWhy(cls,tid)};
+  };
+  const netliveQ=(net,extra)=>{
+    const cls=netLivenessClass(net),lv=liveness(net);
+    const per=net.trans.map(t=>`${t.id}: ${lv[t.id]}`).join(', ');
+    return {type:'mc',q:'Judge the liveness of the whole net.',note:extra,svg:drawNet(net,net.m0),
+      opts:[
+        {t:'Live (strong-live): every transition is L4-live',ok:cls==='live'},
+        {t:'Quasi-live (weak-live): at least one transition is L4-live, but not all',ok:cls==='quasi'},
+        {t:'Neither: no transition is L4-live',ok:cls==='notlive'},
+      ],
+      why:`Per-transition liveness here: ${per}. Background: first classify every single transition (L0 to L4), then judge the net. Live/strong-live means ALL transitions are L4. Quasi-live/weak-live means at least one L4 exists next to weaker ones. The weakest transition drags the whole net down.`};
+  };
+  const boundQ=net=>{
+    const g=explore(net);const k=g.kbound;
+    return {type:'mc',q:'Is the net bounded? If yes, for which k?',svg:drawNet(net,net.m0),
+      opts:[
+        {t:'1-bounded (safe): never more than 1 token in any single place',ok:g.bounded&&k===1},
+        {t:'2-bounded: some place holds 2 tokens at some point, never more',ok:g.bounded&&k===2},
+        {t:'3-bounded',ok:g.bounded&&k===3},
+        {t:'Unbounded: some place can accumulate tokens forever',ok:!g.bounded},
+      ],
+      why:g.bounded?`Across all ${g.order.length} reachable markings the maximum number of tokens in any single place is ${k}. Background: boundedness is judged per place, not by the total in the net. In your reachability table it is simply the largest number in any column.`:'Token counts grow without limit.'};
+  };
+  const enabledQ=(net,M,label)=>{
+    const en=enabledSet(net,M);
+    return {type:'multi',q:`Which transitions are enabled at the marking M = ${fmtM(net,M)}${label?' ('+label+')':''}? (select all)`,
+      svg:drawNet(net,M),
+      opts:net.trans.map(t=>({t:t.id,ok:en.includes(t.id)})),
+      why:(net.type==='EC'
+        ?'E/C rule: a transition is enabled iff ALL its input places carry a token and its output places are free (capacity 1).'
+        :'P/T rule (Def 2.5): for every input place M(p) ≥ W(p,t), and for every output place the tokens after firing must not exceed the capacity C(p).')
+        +` Enabled here: ${en.length?en.join(', '):'none, this is a dead state'}.`};
+  };
+  const structQ=net=>{
+    const st=structSound(net);
+    return {type:'mc',q:'Is this net structurally sound (well-formed)?',svg:drawNet(net,net.m0),
+      opts:[
+        {t:'Yes: there is an initial node, a final node, and every node lies on a path between them',ok:st.sound},
+        {t:'No: the structural conditions are violated',ok:!st.sound},
+      ],
+      why:st.sound
+        ?`Def 2.10: an initial node without incoming edges exists (${st.inits.join(', ')}), a final node without outgoing edges exists (${st.finals.join(', ')}), and every node is on a path from initial to final. All three hold.`
+        :`Def 2.10 fails: ${st.reason}. Background: structural soundness looks ONLY at the graph structure. Markings and firing behavior are completely ignored, which is why a structurally sound net can still deadlock.`};
+  };
+
+  push(enabledQ(NETS.SEQ,{i:1},'the initial marking'));
+  push(structQ(NETS.SEQ));
+  push(enabledQ(NETS.AND,{p1:1,p2:1},'after t1 has fired'));
+  push(boundQ(NETS.AND));
+  push({type:'mc',q:'Place i has TWO outgoing transitions t1 and t2, but only one token. What BPMN construct does this pattern correspond to?',
+    svg:drawNet(NETS.CHOICE,NETS.CHOICE.m0),
+    opts:[
+      {t:'XOR gateway: both transitions are enabled but only one fires (non-determinism)',ok:true},
+      {t:'AND gateway: both transitions fire',ok:false},
+      {t:'Inclusive OR: one or both fire',ok:false},
+      {t:'Event-based gateway: the token waits for an external event',ok:false},
+    ],
+    why:'A place with several output transitions models the XOR split: all are enabled, but firing one consumes the token, disabling the others. An AND split is one TRANSITION with several output places.'});
+  push(liveOpts(NETS.CHOICE,'t3'));
+  push(netliveQ(NETS.CYCLE,'tB returns the token via t* to i.'));
+  push(structQ(NETS.CYCLE));
+  push(liveOpts(NETS.DEAD,'t3'));
+  push({type:'mc',q:'The net starts with one token in i. t1 and t2 form an XOR split, but t3 joins like an AND. What happens at runtime?',
+    svg:drawNet(NETS.DEAD,NETS.DEAD.m0),
+    opts:[
+      {t:'Deadlock: after t1 or t2 fires, t3 waits forever for a token in the other place: a reachable marking where nothing is enabled and o is never reached',ok:true},
+      {t:'The net terminates properly in o',ok:false},
+      {t:'Livelock: the token cycles forever',ok:false},
+      {t:'t3 fires with only one input token',ok:false},
+    ],
+    why:'Classic XOR-split/AND-join mismatch (Weske Fig 6.4). Only one of p1/p2 ever gets a token, but t3 needs BOTH. Note: the net is structurally sound: the defect is behavioral, which is why reachability analysis is needed.'});
+  push(structQ(NETS.DEAD));
+  push(liveOpts(NETS.LLOCK,'t2'));
+  push(netliveQ(NETS.LLOCK,'p1→t2→p2→t3→p1 is a loop; t4 is the exit.'));
+  push(netliveQ(NETS.QUASI,'Left component cycles forever; p3 never receives a token.'));
+  push({type:'mc',q:'What type of Petri net is this, and why?',svg:drawNet(NETS.PTLEC,NETS.PTLEC.m0),
+    opts:[
+      {t:'P/T net: it uses an edge weight (2), a place capacity (C=1 on p3), and places holding more than one token',ok:true},
+      {t:'E/C net: every place holds at most one token',ok:false},
+      {t:'Workflow net: it has a dedicated i and o place',ok:false},
+      {t:'Colored Petri net: the tokens are distinguishable',ok:false},
+    ],
+    why:'E/C nets N=(P,T,F) allow max. 1 token per place, no weights, no capacities. P/T nets N=(P,T,F,C,W,M0) extend them with capacities C, edge weights W (defaults: C=∞, W=1). Here p4 starts with 2 tokens and (p4,t1) has weight 2.'});
+  push(enabledQ(NETS.PTLEC,{p4:2},'the initial marking. Mind the weight 2 on (p4,t1)!'));
+  push(boundQ(NETS.PTLEC));
+  (()=>{const g=explore(NETS.PTLEC);
+    const yes=g.order.includes('1,1,1,0'),no=g.order.includes('0,0,0,1');
+    push({type:'mc',q:'Is the marking M = (1, 1, 1, 0) for (p1, p2, p3, p4) reachable from M0 = (0, 0, 0, 2)?',svg:drawNet(NETS.PTLEC,NETS.PTLEC.m0),
+      opts:[
+        {t:'Yes: a firing sequence from M0 leads there',ok:yes},
+        {t:'No: no firing sequence reaches it',ok:!yes},
+      ],
+      why:`A marking is reachable iff a firing sequence from M0 leads to it. Remember W(p4,t1)=2: firing t1 consumes BOTH tokens from p4. The full sequence: t1 → (1,1,0,0), t2 → (0,1,1,1), t3 → (0,0,1,2), t1 → (1,1,1,0). The net has ${g.order.length} reachable markings${yes?' and (1,1,1,0) is one of them':''}. Sanity check for (0,0,0,1): ${no?'reachable':'NOT reachable, tokens are never lost in this net'}.`});
+  })();
+  FORGE_SPECS.forEach(spec=>B.push(forgeQ(spec)));
+  return B;
+}
+
+/* ============ MODE 1: Model translation bank ============ */
+function svgT1(labels){ // XOR split/join with two condition labels
+  return bpmn(520,165,[
+    {k:'start',x:30,y:80},ar(43,80,84,80),
+    {k:'gw',x:101,y:80,t:'X'},
+    arp([[101,63],[101,40],[168,40]],labels[0],[135,40]),{k:'task',x:210,y:40,t:'A'},
+    arp([[101,97],[101,120],[168,120]],labels[1],[135,120]),{k:'task',x:210,y:120,t:'B'},
+    arp([[252,40],[310,40],[310,63]]),arp([[252,120],[310,120],[310,97]]),
+    {k:'gw',x:310,y:80,t:'X'},ar(327,80,368,80),
+    {k:'task',x:400,y:80,t:'C'},ar(432,80,472,80),{k:'end',x:486,y:80},
+  ]);
+}
+const TRANSLATE_BANK=[
+{type:'mc',q:'Translate this BPMN to pseudo code. Only traces described by the BPMN may be possible.',
+ note:'Exam rule: “if no condition for a decision branch is valid, a deadlock occurs: this has to be accounted for explicitly.”',
+ svg:svgT1(['C1','C2']),
+ opts:[
+  {code:'if C1\n  task A\nelse if C2\n  task B\nelse\n  deadlock\nend\ntask C',ok:true},
+  {code:'if C1\n  task A\nelse if C2\n  task B\nend\ntask C',ok:false},
+  {code:'if C1\n  task A\nend\nif C2\n  task B\nend\ntask C',ok:false},
+  {code:'parallel\n  branch\n    task A\n  end\n  branch\n    task B\n  end\nend\ntask C',ok:false},
+ ],
+ why:'The gateway has conditions on BOTH outgoing arcs and no default flow. If neither C1 nor C2 holds, the BPMN token is stuck: pseudocode must signal this with an explicit deadlock in the else. Option 3 is wrong twice: it allows A AND B (inclusive semantics) and never deadlocks.'},
+{type:'mc',q:'Same model, but now the lower arc is the DEFAULT flow (else). Which translation is correct?',
+ svg:svgT1(['C1','else']),
+ opts:[
+  {code:'if C1\n  task A\nelse\n  task B\nend\ntask C',ok:true},
+  {code:'if C1\n  task A\nelse\n  task B\nelse\n  deadlock\nend\ntask C',ok:false},
+  {code:'if C1\n  task A\nend\ntask B\ntask C',ok:false},
+  {code:'while C1\n  task A\nend\ntask B\ntask C',ok:false},
+ ],
+ why:'A default flow catches every case where C1 is false: the decision can never get stuck, so NO deadlock branch is needed (and a second else is not even legal). Option 3 executes B always, even after A.'},
+{type:'mc',q:'Translate the loop. Watch exactly where the back edge re-enters!',
+ svg:bpmn(500,150,[
+  {k:'start',x:30,y:85},ar(43,85,84,85),
+  {k:'gw',x:101,y:85,t:'X'},ar(118,85,150,85),
+  {k:'task',x:185,y:85,t:'A'},ar(217,85,250,85),
+  {k:'gw',x:267,y:85,t:'X'},
+  arp([[267,68],[267,30],[101,30],[101,68]],'C1',[184,30]),
+  ar(284,85,318,85,'not C1'),
+  {k:'task',x:352,y:85,t:'B'},ar(384,85,424,85),{k:'end',x:438,y:85},
+ ]),
+ opts:[
+  {code:'task A\nwhile C1\n  task A\nend\ntask B',ok:true},
+  {code:'while C1\n  task A\nend\ntask B',ok:false},
+  {code:'task A\nif C1\n  task A\nend\ntask B',ok:false},
+  {code:'while C1\n  task A\n  task B\nend',ok:false},
+ ],
+ why:'A executes BEFORE the condition is first checked (the split gateway sits after A): a post-test loop. Traces: AB, AAB, AAAB… Option 2 is a pre-test loop that also allows the trace B (zero A): a trace the BPMN does not describe. Option 3 caps A at two executions.'},
+{type:'mc',q:'And now the pre-test variant. Which translation is correct?',
+ svg:bpmn(470,160,[
+  {k:'start',x:30,y:95},ar(43,95,84,95),
+  {k:'gw',x:101,y:95,t:'X'},ar(118,95,152,95),
+  {k:'gw',x:169,y:95,t:'X'},
+  arp([[169,78],[169,40],[254,40]],'C1',[210,40]),{k:'task',x:290,y:40,t:'A'},
+  arp([[322,40],[360,40],[360,14],[101,14],[101,78]]),
+  arp([[169,112],[169,140],[254,140]],'not C1',[212,140]),{k:'task',x:290,y:140,t:'B'},
+  ar(322,140,362,140),{k:'end',x:376,y:140},
+ ]),
+ opts:[
+  {code:'while C1\n  task A\nend\ntask B',ok:true},
+  {code:'task A\nwhile C1\n  task A\nend\ntask B',ok:false},
+  {code:'while C1\n  task A\nend\nif C1\n  task B\nelse\n  deadlock\nend',ok:false},
+  {code:'if C1\n  task A\nend\ntask B',ok:false},
+ ],
+ why:'The condition gateway is reached BEFORE any A: a pre-test loop, traces B, AB, AAB… Option 2 forces at least one A. Option 3 always deadlocks: when a while loop terminates, C1 is false by definition, so task B is unreachable. Option 4 allows at most one A.'},
+{type:'mc',q:'Translate the parallel block.',
+ svg:bpmn(560,185,[
+  {k:'start',x:30,y:95},ar(43,95,84,95),
+  {k:'gw',x:101,y:95,t:'+'},
+  arp([[101,78],[101,45],[158,45]]),{k:'task',x:192,y:45,t:'A'},ar(224,45,258,45),{k:'task',x:292,y:45,t:'B'},
+  arp([[324,45],[375,45],[375,78]]),
+  arp([[101,112],[101,145],[210,145]]),{k:'task',x:244,y:145,t:'C'},
+  arp([[276,145],[375,145],[375,112]]),
+  {k:'gw',x:375,y:95,t:'+'},ar(392,95,426,95),
+  {k:'task',x:460,y:95,t:'D'},ar(492,95,528,95),{k:'end',x:542,y:95},
+ ]),
+ opts:[
+  {code:'parallel\n  branch\n    task A\n    task B\n  end\n  branch\n    task C\n  end\nend\ntask D',ok:true},
+  {code:'task A\ntask B\ntask C\ntask D',ok:false},
+  {code:'parallel\n  branch\n    task A\n    task B\n    task D\n  end\n  branch\n    task C\n  end\nend',ok:false},
+  {code:'if C1\n  task A\n  task B\nelse\n  task C\nend\ntask D',ok:false},
+ ],
+ why:'Both branches run concurrently; D comes after the AND join, so it must wait for BOTH branches. Option 2 loses the interleavings (e.g. CAB, ACB…). Option 3 lets D run before C has finished: a trace the BPMN forbids. Remember: AND does not mean “at the same time”, it means both branches are ready in any order.'},
+{type:'mc',q:'Two parallel branches share the flag finished. The model wants EXACTLY ONE of the second tasks (B or D) to execute, whichever branch gets there first. What is wrong with this translation?',
+ code:'set finished = false\nparallel\n  branch\n    task C\n    if finished == false\n      set finished = true\n      task D\n    end\n  end\n  branch\n    task A\n    if finished == false\n      set finished = true\n      task B\n    end\n  end\nend',
+ opts:[
+  {t:'The check-and-set of finished is not atomic: both branches can pass “finished == false” before either sets it. B AND D both execute (race condition). The if-blocks must be wrapped in mutex … end.',ok:true},
+  {t:'Nothing: the flag alone already guarantees mutual exclusion',ok:false},
+  {t:'It deadlocks, because both branches wait for each other',ok:false},
+  {t:'set is not allowed inside parallel branches',ok:false},
+ ],
+ why:'In parallel branches, steps interleave arbitrarily. Interleaving: branch 1 reads finished=false → branch 2 reads finished=false → both set it and run their task. The exam’s instruction set provides a mutex block (only valid inside parallel branches) precisely for this: it makes the test-and-set atomic.'},
+{type:'mc',q:'Inclusive OR, the exam classic. Note: task A may CHANGE the value of C2! Which translation is correct?',
+ svg:bpmn(440,170,[
+  {k:'start',x:30,y:80},ar(43,80,84,80),
+  {k:'gw',x:101,y:80,t:'O'},
+  arp([[101,63],[101,40],[168,40]],'C1',[135,40]),{k:'task',x:210,y:40,t:'A'},
+  arp([[101,97],[101,120],[168,120]],'C2',[135,120]),{k:'task',x:210,y:120,t:'B'},
+  arp([[252,40],[310,40],[310,63]]),arp([[252,120],[310,120],[310,97]]),
+  {k:'gw',x:310,y:80,t:'O'},ar(327,80,368,80),{k:'end',x:382,y:80},
+  {k:'note',x:220,y:160,t:'task A may modify C2'},
+ ]),
+ opts:[
+  {code:'set doA = false\nset doB = false\nif C1\n  set doA = true\nend\nif C2\n  set doB = true\nend\nif not doA && not doB\n  deadlock\nend\nif doA\n  task A\nend\nif doB\n  task B\nend',ok:true},
+  {code:'if C1\n  task A\nend\nif C2\n  task B\nend\nif not C1 && not C2\n  deadlock\nend',ok:false},
+  {code:'if C1\n  task A\nelse if C2\n  task B\nelse\n  deadlock\nend',ok:false},
+  {code:'parallel\n  branch\n    if C1\n      task A\n    end\n  end\n  branch\n    if C2\n      task B\n    end\n  end\nend',ok:false},
+ ],
+ why:'The inclusive gateway decides which branches run based on the state AT the gateway. Latch the conditions into variables FIRST, then execute. Option 2 evaluates C2 after task A already ran: if A changed C2, the wrong branch set executes (and the deadlock check comes too late). Option 3 is exclusive (never both). Option 4 evaluates conditions late too and misses the deadlock.'},
+{type:'multi',q:'Which of these traces are possible for the code below? (select all)',
+ code:'task A\nparallel\n  branch\n    task B\n  end\n  branch\n    task C\n    task D\n  end\nend\ntask E',
+ opts:[
+  {t:'A B C D E',ok:true},
+  {t:'A C B D E',ok:true},
+  {t:'A C D B E',ok:true},
+  {t:'A B D C E',ok:false},
+  {t:'A C D E B',ok:false},
+ ],
+ why:'B interleaves anywhere between the branch steps, but INSIDE its branch C is always before D, and E only runs after the whole parallel block joins. ABDCE breaks C-before-D; ACDEB runs E before B has finished.'},
+{type:'mc',q:'Translate: BPMN with a while-loop whose body is “task B, then task A”, entered after an initial task A.',
+ svg:bpmn(560,155,[
+  {k:'start',x:28,y:90},ar(41,90,60,90),
+  {k:'task',x:94,y:90,t:'A'},ar(126,90,158,90),
+  {k:'gw',x:175,y:90,t:'X'},ar(192,90,224,90),
+  {k:'gw',x:241,y:90,t:'X'},
+  arp([[241,73],[241,35],[306,35]],'C1',[272,35]),{k:'task',x:340,y:35,t:'B'},
+  ar(372,35,404,35),{k:'task',x:438,y:35,t:'A'},
+  arp([[470,35],[500,35],[500,12],[175,12],[175,73]]),
+  ar(258,90,300,90,'not C1'),
+  {k:'end',x:330,y:90},
+ ]),
+ opts:[
+  {code:'task A\nwhile C1\n  task B\n  task A\nend',ok:true},
+  {code:'task A\nwhile C1\n  task A\n  task B\nend',ok:false},
+  {code:'while C1\n  task A\n  task B\nend',ok:false},
+  {code:'task A\ntask B\nwhile C1\n  task A\nend',ok:false},
+ ],
+ why:'Traces: A / ABA / ABABA…: each loop iteration appends B then A. Option 2 appends A then B (giving AAB…), option 3 allows skipping the initial A, option 4 forces exactly one B. This is the exact example from the exam-topics protocol (Task A; While C1 {Task B; Task A}).'},
+{type:'mc',q:'You get a BPMN that is NOT well-formed (e.g. an arc jumps from inside one loop into the body of another). The exam asks for pseudo code. What is the correct approach?',
+ opts:[
+  {t:'First restructure the model into a well-formed (block-structured) one that preserves exactly the same trace set (e.g. with while-loops and flag variables), then translate that',ok:true},
+  {t:'Translate arrow-by-arrow using goto',ok:false},
+  {t:'Ignore the second loop, it is redundant',ok:false},
+  {t:'Unstructured models cannot be expressed in pseudo code at all',ok:false},
+ ],
+ why:'The instruction set (if/while/parallel) is block-structured: there is no goto. SoSe24 exercise 1b did exactly this: “the model had to be well-formed [first]; the well-formed pseudo code had to be modeled as a well-formed BPMN model”. The rewritten model must allow exactly the same traces.'},
+];
+TRANSLATE_BANK.forEach(q=>q.mode='translate');
+/* ============ MODE 4: CPEE & logs bank ============ */
+const CPEE_BANK=[
+{type:'text',q:'Only <call> activities appear in the log (scripts are not logged). Give the exact trace this process produces.',
+ note:'Type the activity letters in order, e.g. ABAB',
+ xml:'<description xmlns="http://cpee.org/ns/description/1.0">\n  <manipulate id="s1" label="data.n = 2"/>\n  <loop mode="pre_test" condition="data.n > 0">\n    <call id="A" endpoint=""/>\n    <call id="B" endpoint=""/>\n    <manipulate id="s2" label="data.n -= 1"/>\n  </loop>\n</description>',
+ answer:'ABAB',
+ why:'pre_test: the condition is checked BEFORE each iteration. n=2 → run A,B (n becomes 1) → check 1>0 → run A,B (n becomes 0) → check 0>0 fails → exit. Trace: A B A B. This is exactly the SoSe24 style: “loop conditions were modeled so that the number of iterations was fixed”.'},
+{type:'mc',q:'How many times does activity A execute?',
+ xml:'<description xmlns="http://cpee.org/ns/description/1.0">\n  <manipulate id="s1" label="data.n = 0"/>\n  <loop mode="post_test" condition="data.n > 0">\n    <call id="A" endpoint=""/>\n  </loop>\n</description>',
+ opts:[{t:'1: post_test runs the body once BEFORE the first condition check',ok:true},
+       {t:'0: the condition is already false',ok:false},
+       {t:'Infinitely often',ok:false},
+       {t:'The process deadlocks',ok:false}],
+ why:'post_test = do-while: body first, condition after. With mode="pre_test" the answer would be 0. This pre/post distinction is a favorite exam trap: check the mode attribute first, always.'},
+{type:'multi',q:'Which traces can this process produce? (select all)',
+ xml:'<description xmlns="http://cpee.org/ns/description/1.0">\n  <choose mode="exclusive">\n    <alternative condition="data.x == 1">\n      <call id="A" endpoint=""/>\n    </alternative>\n    <alternative condition="data.y == 1">\n      <call id="B" endpoint=""/>\n    </alternative>\n    <otherwise>\n      <call id="C" endpoint=""/>\n    </otherwise>\n  </choose>\n  <call id="D" endpoint=""/>\n</description>',
+ opts:[{t:'A D',ok:true},{t:'B D',ok:true},{t:'C D',ok:true},{t:'A B D',ok:false},{t:'D',ok:false}],
+ why:'mode="exclusive": alternatives are evaluated in document order and only the FIRST true one runs: never two. The otherwise runs only if no alternative matched, so some branch always executes before D. 3 traces.'},
+{type:'multi',q:'Same structure, but mode="inclusive". Which traces can occur now? (select all)',
+ note:'THE guaranteed multiple-choice topic per the exam-topics protocol.',
+ xml:'<description xmlns="http://cpee.org/ns/description/1.0">\n  <choose mode="inclusive">\n    <alternative condition="data.x == 1">\n      <call id="A" endpoint=""/>\n    </alternative>\n    <alternative condition="data.y == 1">\n      <call id="B" endpoint=""/>\n    </alternative>\n    <otherwise>\n      <call id="C" endpoint=""/>\n    </otherwise>\n  </choose>\n</description>',
+ opts:[{t:'A',ok:true},{t:'B',ok:true},{t:'A B',ok:true},{t:'C',ok:true},{t:'B A',ok:false},{t:'A C',ok:false}],
+ why:'Inclusive OR: EVERY alternative whose condition is true executes: one, or both, in document order (A before B, never B A). The otherwise still runs only when NO alternative is true, so C never combines with A or B. 4 possible traces: A / B / AB / C.'},
+{type:'multi',q:'Which traces can this parallel process produce? (select all)',
+ xml:'<description xmlns="http://cpee.org/ns/description/1.0">\n  <parallel wait="-1" cancel="last">\n    <parallel_branch>\n      <call id="A" endpoint=""/>\n    </parallel_branch>\n    <parallel_branch>\n      <call id="B" endpoint=""/>\n      <call id="C" endpoint=""/>\n    </parallel_branch>\n  </parallel>\n  <call id="D" endpoint=""/>\n</description>',
+ opts:[{t:'A B C D',ok:true},{t:'B A C D',ok:true},{t:'B C A D',ok:true},{t:'A C B D',ok:false},{t:'B C D A',ok:false}],
+ why:'A interleaves freely with the other branch, but INSIDE branch 2 the order B before C is fixed (depth-first through the branch). wait="-1" means D waits for ALL branches. A can never come after D.'},
+{type:'mc',q:'Which BPMN construct does this CPEE fragment implement?',
+ xml:'<parallel wait="1" cancel="first">\n  <parallel_branch>\n    <call id="msg" endpoint=""/>  <!-- receive message -->\n    <call id="A" endpoint=""/>\n  </parallel_branch>\n  <parallel_branch>\n    <call id="timer" endpoint=""/> <!-- timeout -->\n    <call id="B" endpoint=""/>\n  </parallel_branch>\n</parallel>',
+ opts:[{t:'Event-based gateway: all branches start waiting; after the first activity of any branch finishes, all other branches are canceled and only that branch continues',ok:true},
+       {t:'Inclusive OR: every branch whose condition holds executes',ok:false},
+       {t:'Normal AND: all branches complete',ok:false},
+       {t:'Complex gateway',ok:false}],
+ why:'wait="1": proceed after 1 branch finishes; cancel="first": the others are aborted. That is exactly the event-based gateway semantics: the first event (message vs. timeout) decides the path.'},
+{type:'multi',q:'data.done starts false; the endpoint of A may set it true. Which are possible COMPLETE traces? (select all)',
+ xml:'<description xmlns="http://cpee.org/ns/description/1.0">\n  <loop mode="pre_test" condition="true">\n    <call id="A" endpoint=""/>\n    <choose mode="exclusive">\n      <alternative condition="data.done">\n        <escape/>\n      </alternative>\n    </choose>\n  </loop>\n  <call id="B" endpoint=""/>\n</description>',
+ opts:[{t:'A B',ok:true},{t:'A A B',ok:true},{t:'A A A B',ok:true},{t:'B',ok:false},{t:'A',ok:false}],
+ why:'condition="true" → the loop body always runs at least once, so at least one A. escape jumps out of the (nearest ancestor) loop, after which B runs. “B” alone is impossible; “A” alone is not a complete trace: without escape the loop continues.'},
+{type:'mc',q:'What is the difference between <terminate/> and <stop/>?',
+ opts:[{t:'terminate is final: the instance is finished; a stopped instance can continue executing at exactly the position it stopped',ok:true},
+       {t:'stop is final, terminate pauses',ok:false},
+       {t:'terminate only ends the current branch',ok:false},
+       {t:'They are synonyms',ok:false}],
+ why:'Lecture 3, verbatim: “termination is final, an instance is finished after execution. A stopped instance might continue executing at exactly the position it stopped.”'},
+{type:'multi',q:'At which CPEE elements can a potential execution stop (i.e., which elements carry an id)? (select all)',
+ opts:[{t:'Activity (<call>)',ok:true},{t:'Script (<manipulate>)',ok:true},{t:'<stop>',ok:true},{t:'<choose>',ok:false},{t:'<loop>',ok:false},{t:'<parallel>',ok:false}],
+ why:'Lecture 3: “only elements where a potential execution can stop have an id: activity, script, stop. All other elements can not be interrupted during execution.”'},
+{type:'mc',q:'An event log contains many instances of exactly these two traces: ⟨A,B,D⟩ and ⟨A,C,D⟩. Model the BPMN with the MINIMAL logic that fits the log.',
+ opts:[{t:'A → XOR split (B or C) → XOR join → D',ok:true},
+       {t:'A → AND split (B and C in parallel) → AND join → D',ok:false},
+       {t:'A → B → C → D in sequence',ok:false},
+       {t:'A → loop over B → D',ok:false}],
+ why:'B and C never occur together in one trace → exclusive choice. AND would demand traces containing BOTH (ABCD, ACBD). The exam provides ALL possible cases in the log, so if both-together never appears, it is not part of the minimal model.'},
+{type:'mc',q:'Now the log contains exactly ⟨A,B,C,D⟩ and ⟨A,C,B,D⟩. Minimal logic?',
+ opts:[{t:'A → AND split (B ∥ C) → AND join → D: both always happen, in either order',ok:true},
+       {t:'XOR between the two complete sequences',ok:false},
+       {t:'B and C in sequence with a loop',ok:false},
+       {t:'Inclusive OR between B and C',ok:false},],
+ why:'Both traces contain B AND C, only the order differs: the signature of a parallel block. An XOR over two full sequences reproduces the log too, but it is not minimal (it duplicates B, C and hides the concurrency). Inclusive OR would also allow traces with only B or only C, which the log never shows.'},
+{type:'mc',q:'A file starts like this. What type of log is this?',
+ xml:'<log xes.version="1.0" xmlns="http://code.deckfour.org/xes">\n  <extension name="Concept" prefix="concept" uri="…"/>\n  <extension name="Time" prefix="time" uri="…"/>\n  <trace>\n    <string key="concept:name" value="Instance 3"/>\n    <event>\n      <string key="concept:name" value="register request"/>\n      <string key="lifecycle:transition" value="start"/>\n      <date key="time:timestamp" value="2010-12-30T14:32:00"/>\n    </event>\n  </trace>\n</log>',
+ opts:[{t:'XES event log. XML standard for process event data: one trace per instance, events with concept:name, lifecycle:transition, timestamp',ok:true},
+       {t:'CPEE process tree',ok:false},
+       {t:'BPMN 2.0 serialization',ok:false},
+       {t:'Reachability table export',ok:false}],
+ why:'XES (IEEE 1849): <log> → <trace> (one per process instance) → <event> with standard extensions Concept (names), Time (timestamps), Lifecycle, Organizational. A CPEE tree would have <description>, <call>, <loop>…'},
+];
+CPEE_BANK.forEach(q=>q.mode='cpee');
+
+/* ============ MODE 5: comprehension blitz ============ */
+const BLITZ_BANK=[
+{type:'mc',q:'When is a transition of an E/C net enabled/activated?',
+ opts:[{t:'All input places carry a token AND the output places are free (E/C capacity is 1)',ok:true},
+       {t:'At least one input place carries a token',ok:false},
+       {t:'All input places carry a token: output places do not matter',ok:false},
+       {t:'The transition carries a token',ok:false}],
+ why:'Lecture Def.: “A transition t of an EC Net is enabled if all input places of t and none of the output places of t carries a token.” Both sides matter: a full output place blocks firing.'},
+{type:'mc',q:'When is a transition t of a P/T net activated under marking M (Def 2.5)?',
+ opts:[{t:'For every input place: M(p) ≥ W(p,t), and for every output place the tokens after firing do not exceed C(p)',ok:true},
+       {t:'For every input place: M(p) ≥ 1',ok:false},
+       {t:'Total tokens in the net ≥ total edge weight',ok:false},
+       {t:'For every output place: M(p) = 0',ok:false}],
+ why:'Both conditions: enough tokens on every input arc (weights!), and enough capacity on every output place. Careful trap: if W(p,t) > C(p) for a place, t can NEVER fire.'},
+{type:'mc',q:'Defaults in a P/T net when nothing is annotated?',
+ opts:[{t:'Edge weight 1, place capacity ∞',ok:true},
+       {t:'Edge weight 1, place capacity 1',ok:false},
+       {t:'Edge weight 0, place capacity ∞',ok:false},
+       {t:'Both default to 1',ok:false}],
+ why:'W defaults to 1, C defaults to unbounded. (In E/C nets, by contrast, every place effectively has capacity 1.)'},
+{type:'mc',q:'A Petri net is “safe” when…',
+ opts:[{t:'…it is 1-bounded: no place ever holds more than one token',ok:true},
+       {t:'…it has no deadlock',ok:false},
+       {t:'…it is structurally sound',ok:false},
+       {t:'…every transition fires at least once',ok:false}],
+ why:'Safe = 1-bounded. k-bounded = max k tokens in each place; unbounded = some place can grow forever. Boundedness says nothing about deadlocks.'},
+{type:'mc',q:'A net where an AND split puts one token into p1 and one into p2 (2 tokens in the net at once) can still be 1-bounded.',
+ opts:[{t:'True: boundedness is judged PER PLACE, not by the total token count',ok:true},
+       {t:'False: 2 tokens means at least 2-bounded',ok:false}],
+ why:'k-boundedness limits the tokens in each single place. Two tokens in two different places is perfectly 1-bounded.'},
+{type:'mc',q:'“From the initial marking it is already determined that transition t will fire exactly 3 times, then never again.” Strict liveness of t?',
+ opts:[{t:'L1-live: fires at least once, a determined finite number of times',ok:true},
+       {t:'L3-live',ok:false},{t:'L4-live',ok:false},{t:'L0-live',ok:false}],
+ why:'L1: can fire at least once (finitely, determined). L3: CAN fire infinitely often for some run. L4: WILL always stay fireable (from every reachable marking). L0: never.'},
+{type:'mc',q:'“There is a loop through t with an exit: some runs fire t forever, other runs leave and t never fires again.” Strict liveness of t?',
+ opts:[{t:'L3-live',ok:true},{t:'L4-live',ok:false},{t:'L1-live',ok:false},{t:'L2-live',ok:false}],
+ why:'L3: an infinite firing sequence through t EXISTS (non-deterministic. “can”, not “will”). L4 would require that from EVERY reachable marking t can eventually fire again: the exit breaks that.'},
+{type:'mc',q:'The whole net is “live” (strong-live) when…',
+ opts:[{t:'…every transition is L4-live',ok:true},
+       {t:'…at least one transition is L4-live',ok:false},
+       {t:'…no transition is L0-live',ok:false},
+       {t:'…the net is bounded and deadlock-free',ok:false}],
+ why:'Live/strong-live = ALL transitions L4. At-least-one-L4 (plus lower ones) = quasi-live/weak-live. They exclude each other. The weakest transition determines the net.'},
+{type:'mc',q:'What is a deadlock?',
+ opts:[{t:'A reachable marking in which no transition is enabled (and which is not the desired final state)',ok:true},
+       {t:'A transition that can never fire',ok:false},
+       {t:'A loop that runs forever',ok:false},
+       {t:'A place that overflows its capacity',ok:false}],
+ why:'Dead/final state: no transition enabled. A dead TRANSITION is L0-live; an infinite loop is a livelock. In a reachability table, the deadlock row has no successor marking.'},
+{type:'mc',q:'What is a home state (home marking)?',
+ opts:[{t:'A marking that is reachable from every reachable marking: you can always return to it',ok:true},
+       {t:'The initial marking M0',ok:false},
+       {t:'A marking with no enabled transitions',ok:false},
+       {t:'The marking with the most tokens',ok:false}],
+ why:'Home state: reachable from ANY reachable state. In the reachability graph: every node has a path to it.'},
+{type:'multi',q:'Structural soundness (Def 2.10) requires… (select all)',
+ opts:[{t:'An initial node without incoming edges exists',ok:true},
+       {t:'A final node without outgoing edges exists',ok:true},
+       {t:'Every node lies on a path from initial to final node',ok:true},
+       {t:'The net is bounded',ok:false},
+       {t:'Every transition fires at least once',ok:false}],
+ why:'Purely structural: markings are ignored entirely. Boundedness and actual firing are BEHAVIORAL properties, checked via reachability analysis.'},
+{type:'mc',q:'Soundness property P2 (“Proper Termination”) means…',
+ opts:[{t:'The final state is the only reachable state with a token in the final place: no tokens are left behind in the net when it finishes',ok:true},
+       {t:'Every instance eventually terminates',ok:false},
+       {t:'Every transition participates in some run',ok:false},
+       {t:'The net has exactly one final place',ok:false}],
+ why:'P1=Termination (instances always reach the final state), P2=Proper Termination (nothing left behind: implies boundedness), P3=No dead transitions, P4=Transition participation (implied by P1∧P3).'},
+{type:'mc',q:'A WF net is sound, bounded: but not live (it terminates!). The lecture trick to make it live:',
+ opts:[{t:'Add an artificial transition t* connecting final place o back to initial place i',ok:true},
+       {t:'Add a token to every place',ok:false},
+       {t:'Remove the final place',ok:false},
+       {t:'Increase all capacities',ok:false}],
+ why:'t*: o → t* → i restarts the net forever, making every transition L4-live. Note what you trade away: with t*, o gains an outgoing edge: the extended net is no longer structurally sound. Exam construction tasks play exactly with this trade-off.'},
+{type:'multi',q:'Valid LEAVES of a CPEE tree? (select all: a past exam question)',
+ opts:[{t:'Activity (<call>)',ok:true},{t:'Script (<manipulate>)',ok:true},{t:'Terminate',ok:true},{t:'Stop',ok:true},{t:'Escape',ok:true},{t:'Alternative',ok:false},{t:'Parallel Branch',ok:false}],
+ why:'Leaves (no children): Activity, Script, Terminate, Stop, Escape. Branches (may have children): Choose, Alternative, Otherwise, Parallel, Parallel Branch. Both lists have been asked verbatim.'},
+{type:'multi',q:'Valid BRANCHES in CPEE trees? (select all: asked in SS23)',
+ opts:[{t:'Choose',ok:true},{t:'Alternative',ok:true},{t:'Otherwise',ok:true},{t:'Parallel',ok:true},{t:'Parallel Branch',ok:true},{t:'Escape',ok:false},{t:'Terminate',ok:false}],
+ why:'Choose contains alternative/otherwise; parallel contains parallel branches; alternative, otherwise and parallel branch allow all elements as children. Escape and Terminate are leaves.'},
+{type:'mc',q:'The <otherwise> element of a choose…',
+ opts:[{t:'…runs only if no alternative matched; if absent, an EMPTY otherwise is assumed; it does NOT have to be the last child',ok:true},
+       {t:'…must be the last child of choose',ok:false},
+       {t:'…is mandatory in every choose',ok:false},
+       {t:'…runs in addition to matching alternatives',ok:false}],
+ why:'Three facts straight from the lecture: and all three are common trick-question bait. Missing otherwise = assumed empty (the choose simply does nothing), and its position among the children is irrelevant.'},
+{type:'mc',q:'In a <choose>, what determines the order in which conditions are evaluated?',
+ opts:[{t:'The document order of the children. CPEE trees are ORDERED trees',ok:true},
+       {t:'Alphabetical order of ids',ok:false},
+       {t:'Random order',ok:false},
+       {t:'All conditions are evaluated simultaneously',ok:false}],
+ why:'“The order of the children determines the order of the evaluation.” This matters for exclusive chooses with overlapping conditions and for the trace order of inclusive ones.'},
+{type:'mc',q:'<parallel wait="2" cancel="…"> with 3 branches means…',
+ opts:[{t:'Continue as soon as 2 branches have finished; the remaining branch is canceled',ok:true},
+       {t:'Wait 2 seconds',ok:false},
+       {t:'Run only 2 of the 3 branches',ok:false},
+       {t:'Wait for all branches, retry twice',ok:false}],
+ why:'wait = number of branches to wait for; -1 = all. wait="1" cancel="first" gives event-based-gateway semantics.'},
+{type:'mc',q:'Typical lifecycle of a process INSTANCE (CPEE)?',
+ opts:[{t:'ready → running → (stopping → stopped → running …) → finished',ok:true},
+       {t:'calling → receiving → manipulating → done',ok:false},
+       {t:'created → assigned → completed',ok:false},
+       {t:'start → complete',ok:false}],
+ why:'Instance: ready on creation, running when started, stopping/stopped around errors or a <stop>, then it can be set back to running, until finished. (calling/receiving/manipulating is the TASK lifecycle: classic swap-trap.)'},
+{type:'mc',q:'Typical lifecycle of a process TASK (CPEE)?',
+ opts:[{t:'calling → receiving → manipulating → status set (done / failed)',ok:true},
+       {t:'ready → running → finished',ok:false},
+       {t:'added → taken → given back → deleted',ok:false},
+       {t:'start → suspend → resume → complete',ok:false}],
+ why:'Task: the REST service is CALLED with method+arguments, raw data is RECEIVED back, the finalize code MANIPULATES the process context, then the status is set. (start/suspend/resume/complete are XES human-task states; added/taken belong to the worklist.)'},
+{type:'mc',q:'A worklist consists of two parts:',
+ opts:[{t:'Worklist CONTROL (manages available tasks for all instances) and worklist HANDLING (user interface for actors)',ok:true},
+       {t:'Frontend and database',ok:false},
+       {t:'Push service and pull service',ok:false},
+       {t:'Task queue and timer',ok:false}],
+ why:'Control = engine side, knows which tasks are available; handling = the actor-facing UI for viewing and working on tasks.'},
+{type:'mc',q:'Updating worklists: which statement matches the lecture?',
+ opts:[{t:'Classical pull leads to outdated worklists and unnecessary communication; classical push to potentially too much communication; the good compromise is time-driven push',ok:true},
+       {t:'Pull is always best: it minimizes traffic',ok:false},
+       {t:'Push guarantees consistency at no cost',ok:false},
+       {t:'Worklists never need updating',ok:false}],
+ why:'The evaluation slide verbatim. Remember all three verdicts: comprehension questions love the “good compromise”.'},
+{type:'mc',q:'Advantage of assigning work items through ROLES instead of individual actors?',
+ opts:[{t:'People are exchangeable: if someone leaves, another person with the same role can continue the work',ok:true},
+       {t:'Roles execute tasks faster',ok:false},
+       {t:'Roles need no authorization',ok:false},
+       {t:'Each task then has exactly one possible actor',ok:false}],
+ why:'Role-based distribution decouples the process from specific persons: robustness against personnel change. (Related: Separation of Duty = a task must be done by an actor NOT involved in another task, e.g. four-eyes principle; Binding of Duty = same actor.)'},
+{type:'multi',q:'MINIMAL information an item (event) in a process log must carry? (select all: past exam question)',
+ opts:[{t:'Which task/event it belongs to (event name)',ok:true},
+       {t:'Timestamp',ok:true},
+       {t:'Which process INSTANCE it belongs to',ok:true},
+       {t:'Lifecycle information (e.g. start / complete)',ok:true},
+       {t:'Cost of the activity',ok:false},
+       {t:'Name of the responsible manager',ok:false}],
+ why:'Minimal = enough to reconstruct what happened when, in which instance, and at which lifecycle stage. Resources, costs etc. are useful ENRICHMENT, not minimal. Give an example for each in the exam (e.g. “register request”, 2010-12-30T14:32, Instance 3, start).'},
+{type:'mc',q:'Which file formats give the highest logging performance, and why?',
+ opts:[{t:'CSV / YAML / plain text: each event is appended at the end of the file, directly supported by the OS/file system (faster than a database)',ok:true},
+       {t:'XML / JSON, because they are structured',ok:false},
+       {t:'Binary databases, because indexes make writes fast',ok:false},
+       {t:'PDF, because it is portable',ok:false}],
+ why:'XML/JSON must be parsed/rewritten as a whole → bad IO for load, seek, insert, save. Append-only text formats win for writing logs. (XES is XML: great for EXCHANGE, not for high-speed writing.)'},
+{type:'mc',q:'Logging vs. monitoring?',
+ opts:[{t:'Logging = analysis AFTER the fact, data stored in files/DBs; monitoring = observing at RUNTIME, based on event streams',ok:true},
+       {t:'They are synonyms',ok:false},
+       {t:'Monitoring is offline, logging is online',ok:false},
+       {t:'Logging only stores errors',ok:false}],
+ why:'Both share message structure (timestamps, unique ids), but the time of use differs: post-mortem analysis vs. live observation (e.g. where is my package right now).'},
+{type:'mc',q:'Why are execution languages (CPEE trees) needed at all, next to BPMN and Petri nets?',
+ opts:[{t:'BPMN has no full execution semantics and cannot be executed directly; Petri nets could be executed but at great effort. CPEE trees run on a process engine',ok:true},
+       {t:'BPMN files are too large',ok:false},
+       {t:'Petri nets cannot model parallelism',ok:false},
+       {t:'CPEE replaces modeling entirely',ok:false}],
+ why:'Three levels: conceptual (BPMN, EPC: communication), formal (Petri nets, RPST: verification/analysis), execution (CPEE: graphical programming on the engine).'},
+{type:'mc',q:'CPEE trees have NO edges. Which consequence is true?',
+ opts:[{t:'Structural deadlocks are impossible: but behavioral deadlocks are still possible',ok:true},
+       {t:'All deadlocks are impossible',ok:false},
+       {t:'Loops cannot be expressed',ok:false},
+       {t:'The order of children is irrelevant',ok:false}],
+ why:'Edges are implicit in the tree hierarchy; you cannot draw a structurally broken arc. Behavior (conditions, data) can still deadlock. And CPEE trees are ORDERED: child order is execution order, traversed depth-first.'},
+{type:'multi',q:'Main COMPONENTS of a process management system? (select all: stakeholders excluded)',
+ opts:[{t:'Process modeling GUI',ok:true},{t:'Process model repository',ok:true},{t:'Process engine',ok:true},{t:'Worklist',ok:true},{t:'Invoked applications / services',ok:true},{t:'Process designer',ok:false},{t:'Process participant',ok:false}],
+ why:'Designer and participant are the STAKEHOLDERS (they interact via modeling GUI and worklist respectively); the components are modeling GUI, repository, engine, worklist, invoked applications.'},
+{type:'mc',q:'In BPMN, a data object with an arrow FROM task A TO the object means…',
+ opts:[{t:'Task A creates/updates the data object',ok:true},
+       {t:'Task A reads the data object',ok:false},
+       {t:'The data object triggers task A',ok:false},
+       {t:'Nothing: direction is decorative',ok:false}],
+ why:'Arrow towards the object = written/produced by the task; arrow from the object into a task = read/used. Exam rule of thumb: before every decision gateway there must be a step (or linked data) that PRODUCES the information the gateway needs.'},
+{type:'mc',q:'“The two tasks after an AND split must execute at the same time.”',
+ opts:[{t:'False. AND means both branches are READY and can execute in any order (interleaving); simultaneity is not required',ok:true},
+       {t:'True: that is what parallel means',ok:false}],
+ why:'Concurrency = arbitrary interleaving, not synchronized simultaneity. That is why traces of a parallel block are all the order-preserving shuffles of its branches.'},
+];
+BLITZ_BANK.forEach(q=>q.mode='blitz');
+/* ============ MODES registry ============ */
+let NET_QS=null;
+const MODES={
+  translate:{title:'Model Translation',sub:'Problem 1 · BPMN ↔ pseudo code · ≈22 credits',take:10,bank:()=>TRANSLATE_BANK},
+  nets:{title:'Net Properties & Forge',sub:'Problem 2 · liveness · boundedness · construction tasks',take:9,bank:()=>(NET_QS||(NET_QS=buildNetQuestions()))},
+  cpee:{title:'CPEE & Logs',sub:'Problem 4 · traces · XES · inclusive OR',take:8,bank:()=>CPEE_BANK},
+  blitz:{title:'Comprehension Blitz',sub:'Problem 4 · definitions & lifecycles',take:10,bank:()=>BLITZ_BANK},
+};
+const norm=s=>String(s).toUpperCase().replace(/[^A-Z0-9]/g,'');
+
+/* ============ MISSION RUNNER ============ */
+let M={};
+function startMission(modeId){
+  const cfg=MODES[modeId];
+  M={mode:modeId,qs:sample(cfg.bank(),cfg.take),i:0,right:0,results:[]};
+  renderQ();
+}
+function qBlocks(q){
+  let h='';
+  if(q.note)h+=`<p class="qnote">${q.note}</p>`;
+  if(q.svg)h+=`<div class="diagram">${q.svg}</div>`;
+  if(q.code)h+=`<pre class="codeblock">${esc(q.code)}</pre>`;
+  if(q.xml)h+=`<pre class="codeblock">${esc(q.xml)}</pre>`;
+  return h;
+}
+function progBar(){
+  return '<div class="mprog">'+M.qs.map((_,j)=>{
+    if(j<M.i)return `<i class="${M.results[j]?'done':'fail'}"></i>`;
+    if(j===M.i)return '<i class="cur"></i>';
+    return '<i></i>';
+  }).join('')+'</div>';
+}
+function renderQ(){
+  if(M.i>=M.qs.length)return missionEnd();
+  const q=M.qs[M.i],cfg=MODES[M.mode];
+  let h=`<div class="card">
+    <div class="qmeta"><span>${cfg.title}</span><span>${M.i+1} / ${M.qs.length}</span></div>
+    ${progBar()}
+    <div class="qtext">${q.q}</div>
+    ${qBlocks(q)}`;
+  if(q.type==='mc'||q.type==='multi'){
+    const order=q._order||(q._order=shuffle(q.opts.map((_,ix)=>ix)));
+    h+=`<div class="opts">`+order.map((oi,vi)=>{
+      const o=q.opts[oi];
+      const inner=o.code?`<pre>${esc(o.code)}</pre>`:(o.svgOpt?`<span style="display:block;min-width:0"><span style="display:block;font-size:13.5px;font-weight:600;margin-bottom:4px">${esc(o.t)}</span><span style="display:block;overflow-x:auto">${o.svgOpt}</span></span>`:esc(o.t));
+      return `<button class="opt" id="opt${vi}" data-oi="${oi}" onclick="pick(${vi})"><span class="key">${vi+1}</span><span style="min-width:0">${inner}</span></button>`;
+    }).join('')+`</div>`;
+    if(q.type==='multi')h+=`<div class="btnrow"><button class="btn" onclick="submitMulti()">Check selection</button><span class="qnote">select every correct answer: graded like the exam: all or nothing</span></div>`;
+  }else if(q.type==='text'){
+    h+=`<div class="tin"><input id="tanswer" autocomplete="off" spellcheck="false" placeholder="your answer…" onkeydown="if(event.key==='Enter')submitText()"><button class="btn" onclick="submitText()">Check</button></div>`;
+  }
+  h+=`<div id="verdict"></div></div>
+  <div class="btnrow"><button class="btn ghost" onclick="go('home')">Exit drill</button></div>`;
+  SCREEN.innerHTML=h;
+  const inp=document.getElementById('tanswer');if(inp)inp.focus();
+}
+function pick(vi){
+  const q=M.qs[M.i];
+  if(q.type==='multi'){document.getElementById('opt'+vi).classList.toggle('sel');return}
+  const chosen=q.opts[+document.getElementById('opt'+vi).dataset.oi];
+  finishQ(!!chosen.ok,vi);
+}
+function submitMulti(){
+  const q=M.qs[M.i];
+  let allRight=true;
+  document.querySelectorAll('.opt').forEach(b=>{
+    const o=q.opts[+b.dataset.oi],sel=b.classList.contains('sel');
+    if(sel!==!!o.ok)allRight=false;
+  });
+  finishQ(allRight,null);
+}
+function submitText(){
+  const q=M.qs[M.i],v=document.getElementById('tanswer').value;
+  finishQ(norm(v)===norm(q.answer),null);
+}
+function finishQ(ok,pickedVi){
+  const q=M.qs[M.i];
+  // reveal
+  document.querySelectorAll('.opt').forEach(b=>{
+    const o=q.opts[+b.dataset.oi],sel=b.classList.contains('sel')||(pickedVi!==null&&b.id==='opt'+pickedVi);
+    b.disabled=true;b.classList.remove('sel');
+    if(o.ok&&sel)b.classList.add('right');
+    else if(o.ok)b.classList.add(q.type==='multi'?'missed':'right');
+    else if(sel)b.classList.add('wrong');
+  });
+  const inp=document.getElementById('tanswer');if(inp){inp.disabled=true}
+  const pts=q.type==='mc'?10:12;
+  award(ok,pts);
+  const st=modeStat(M.mode);st.seen++;if(ok)st.right++;save();
+  M.results.push(ok);if(ok)M.right++;
+  const v=document.getElementById('verdict');
+  v.innerHTML=`<div class="verdict ${ok?'ok':'bad'}"><div class="vh">${ok?'✓ Correct'+(S.streak>1?' · streak '+S.streak:''):'✗ Wrong'}</div>
+    ${q.type==='text'&&!ok?`<p><b>Expected:</b> <span class="mono">${esc(q.answer)}</span></p>`:''}
+    <p>${q.why||''}</p>
+    ${!ok?`<p style="margin-top:8px">New to this topic? The <a href="#" onclick="go('manual');return false" style="color:var(--accent);font-weight:600">Cheat Sheet</a> explains it from scratch. Your run stays paused while you read.</p>`:''}</div>
+    <div class="btnrow"><button class="btn" id="nextbtn" onclick="M.i++;renderQ()">Next →</button>${!ok?`<button class="btn ghost" onclick="go('manual')">Open Cheat Sheet</button>`:''}</div>`;
+  document.getElementById('nextbtn').focus();
+}
+function missionEnd(){
+  const cfg=MODES[M.mode],pct=Math.round(100*M.right/M.qs.length);
+  const msg=pct>=90?'Exam-ready. Rotate to a weaker topic.':pct>=70?'Solid. One more pass and this one sits.':pct>=50?'Shaky. Skim the Cheat Sheet section, then run it again.':'Rough run. Open the Cheat Sheet, then retry immediately.';
+  SCREEN.innerHTML=`<div class="card" style="text-align:center">
+    <div class="qmeta" style="justify-content:center"><span>${cfg.title}: results</span></div>
+    <div class="bigscore">${M.right} / ${M.qs.length}</div>
+    <p class="sub" style="margin:0 auto 10px">${msg}</p>
+    <div class="btnrow" style="justify-content:center">
+      <button class="btn" onclick="startMission('${M.mode}')">Run again</button>
+      <button class="btn ghost" onclick="go('manual')">Cheat sheet</button>
+      <button class="btn ghost" onclick="go('home')">Overview</button>
+    </div></div>`;
+}
+
+/* ============ REACHABILITY LAB ============ */
+const REACH_LEVELS=[
+  {net:'AND',name:'Drill 1 · E/C warm-up',note:'An E/C net: every place holds max. 1 token. Build the full reachability table.'},
+  {net:'PTLEC',name:'Drill 2 · P/T with weight & capacity',note:'The lecture net: weight 2 on (p4,t1), capacity 1 on p3. Watch both firing conditions.'},
+  {net:'EX22',name:'Drill 3 · Sample Exam 2022, Problem 3: the real thing',note:'This is the actual net from the 2022 sample exam. Formal definition below.'},
+  {net:'EX23',name:'Final Drill · Endterm SS23, Problem 3: the real thing',note:'The actual SS23 endterm net. Capacity check: tokens AFTER firing may not exceed C(p). Note W(p2,t1)=3 vs C(p2)=2 …'},
+];
+let R={};
+function startReach(li){
+  li=li||0;
+  const lv=REACH_LEVELS[li],net=NETS[lv.net];
+  delete net._g;delete net._live;   // fresh
+  const g=explore(net);
+  R={li,lv,net,g,found:[g.k0],queue:[g.k0],phase:'enable',curIdx:0,fireList:[],fireAt:0,finals:null,fi:0,mistakes:0,steps:0};
+  renderReach();
+}
+function reachTable(){
+  const {places}=netMaps(R.net);
+  let h=`<div class="tablewrap"><table class="reach"><tr><th>No.</th>${places.map(p=>`<th>${p}</th>`).join('')}<th>firing transition</th></tr>`;
+  R.found.forEach((k,ix)=>{
+    const M=R.g.markings[k];
+    let fireCol='';
+    if(ix<R.curIdx)fireCol=R.g.out[k].length?R.g.out[k].map(e=>`${e.t} → M${R.found.indexOf(e.to)}`).join('<br>'):'<i>— dead state</i>';
+    else if(ix===R.curIdx)fireCol=R.phase==='enable'?'?':R.g.out[k].slice(0,R.fireAt).map(e=>`${e.t} → M${R.found.indexOf(e.to)}`).join('<br>')+(R.fireAt<R.g.out[k].length?(R.fireAt?'<br>':'')+R.g.out[k][R.fireAt].t+' → ?':'');
+    h+=`<tr class="${ix===R.curIdx&&R.phase!=='final'?'cur':''}"><td class="mk">M${ix}</td>${places.map(p=>`<td>${M[p]||0}</td>`).join('')}<td style="text-align:left">${fireCol}</td></tr>`;
+  });
+  return h+'</table></div>';
+}
+function renderReach(msg,bad){
+  const net=R.net,curKey=R.found[R.curIdx],Mcur=R.g.markings[curKey];
+  let h=`<div class="card">
+    <div class="qmeta"><span>Reachability Lab</span><span>${R.lv.name}</span></div>
+    <p class="qnote">${R.lv.note}</p>
+    ${net.formal?`<pre class="codeblock">${esc(net.formal)}</pre>`:''}
+    <div class="diagram">${drawNet(net,R.phase==='final'?net.m0:Mcur)}</div>
+    ${reachTable()}`;
+  if(R.phase==='enable'){
+    h+=`<div class="qtext">M${R.curIdx}: which transitions are enabled?</div>
+      <p class="qnote">Select all enabled transitions (none = dead state), then confirm.</p>
+      <div class="chips">${net.trans.map(t=>`<button class="chip" id="ch_${t.id}" onclick="this.classList.toggle('sel')">${t.id}</button>`).join('')}</div>
+      <div class="btnrow"><button class="btn" onclick="checkEnabled()">Confirm</button></div>`;
+  }else if(R.phase==='fire'){
+    const e=R.g.out[curKey][R.fireAt];
+    const {places}=netMaps(net);
+    h+=`<div class="qtext">Fire ${e.t} at M${R.curIdx}: what is the resulting marking?</div>
+      <p class="qnote">Token count for (${places.join(', ')}), comma-separated: e.g. <span class="mono">0,1,1,0</span></p>
+      <div class="tin"><input id="mkin" autocomplete="off" spellcheck="false" placeholder="${places.map(()=>'·').join(',')}" onkeydown="if(event.key==='Enter')checkMarking()"><button class="btn" onclick="checkMarking()">Fire</button></div>`;
+  }else if(R.phase==='final'){
+    h+=finalQHtml();
+  }
+  h+=`<div id="verdict">${msg?`<div class="verdict ${bad?'bad':'ok'}"><div class="vh">${bad?'✗ Check the firing rule':'✓ Correct'}</div><p>${msg}</p></div>`:''}</div></div>
+  <div class="btnrow"><button class="btn ghost" onclick="go('home')">Abort</button></div>`;
+  SCREEN.innerHTML=h;
+  const inp=document.getElementById('mkin');if(inp)inp.focus();
+}
+function checkEnabled(){
+  const curKey=R.found[R.curIdx];
+  const truth=enabledSet(R.net,R.g.markings[curKey]).sort().join(',');
+  const sel=R.net.trans.filter(t=>document.getElementById('ch_'+t.id).classList.contains('sel')).map(t=>t.id).sort().join(',');
+  R.steps++;
+  if(sel===truth){
+    award(true,3);
+    if(R.g.out[curKey].length===0){ // dead state
+      advanceMarking(`M${R.curIdx} is a dead state: no transition enabled.`);
+    }else{
+      R.phase='fire';R.fireAt=0;
+      renderReach(`Enabled: ${truth||'none'}. Now fire them one by one.`);
+    }
+  }else{
+    R.mistakes++;award(false,0);
+    renderReach(`Not quite. ${R.net.type==='EC'?'E/C rule: ALL input places marked, output places free.':'P/T rule: every input place needs M(p) ≥ W(p,t), and every output place must still respect its capacity AFTER firing.'} Try again.`,true);
+  }
+}
+function checkMarking(){
+  const curKey=R.found[R.curIdx],e=R.g.out[curKey][R.fireAt];
+  const {places}=netMaps(R.net);
+  const raw=document.getElementById('mkin').value.split(',').map(s=>parseInt(s.trim(),10));
+  const truth=R.g.markings[e.to];
+  const okv=raw.length===places.length&&places.every((p,ix)=>raw[ix]===(truth[p]||0));
+  R.steps++;
+  if(okv){
+    award(true,4);
+    const known=R.found.indexOf(e.to);
+    let msg;
+    if(known===-1){R.found.push(e.to);msg=`${e.t} → new marking M${R.found.length-1}.`;}
+    else msg=`${e.t} → M${known}: already in the table (that row is NOT explored again).`;
+    R.fireAt++;
+    if(R.fireAt>=R.g.out[curKey].length)advanceMarking(msg);
+    else renderReach(msg);
+  }else{
+    R.mistakes++;award(false,0);
+    renderReach(`Recompute: remove W(p,t) tokens from each input place of ${e.t}, add W(t,p) to each output place. Try again.`,true);
+  }
+}
+function advanceMarking(msg){
+  R.curIdx++;
+  // next unexplored marking in table order
+  if(R.curIdx<R.found.length){R.phase='enable';renderReach(msg+` Continue with M${R.curIdx}.`);}
+  else{R.phase='final';buildFinals();renderReach(msg+' Table complete: now the analysis questions, exactly like the exam.');}
+}
+function buildFinals(){
+  const net=R.net,g=R.g,lv=liveness(net),cls=netLivenessClass(net);
+  const deadIdx=g.dead.map(k=>R.found.indexOf(k)).filter(i=>i>=0);
+  R.finals=[
+    {q:'Is the net bounded? For which k?',opts:[
+      {t:'1-bounded (safe)',ok:g.bounded&&g.kbound===1},{t:'2-bounded',ok:g.bounded&&g.kbound===2},
+      {t:'3-bounded',ok:g.bounded&&g.kbound===3},{t:'Unbounded',ok:!g.bounded}],
+     why:`Scan the columns of your table: the maximum count in any single place is ${g.kbound}. In the exam, point at the line/column that shows it.`},
+    {q:'Is the net live?',opts:[
+      {t:'Yes: every transition is L4-live',ok:cls==='live'},
+      {t:'No, but quasi-live: at least one transition is L4-live',ok:cls==='quasi'},
+      {t:'No: no transition is L4-live'+(deadIdx.length?` (the table ends in dead state${deadIdx.length>1?'s':''} ${deadIdx.map(i=>'M'+i).join(', ')})`:''),ok:cls==='notlive'}],
+     why:`Per-transition: ${net.trans.map(t=>t.id+': '+lv[t.id]).join(', ')}. ${deadIdx.length?'Rows without a firing transition ('+deadIdx.map(i=>'M'+i).join(', ')+') are dead states: after them nothing can fire.':''}`},
+    ...net.trans.map(t=>({q:`Strict liveness of ${t.id}?`,opts:['L0','L1','L3','L4'].map(c=>({t:c+'-live',ok:lv[t.id]===c})),why:livWhy(lv[t.id],t.id)})),
+    {q:'What type of Petri net is this?',opts:[
+      {t:'E/C net: max 1 token per place, no weights/capacities',ok:net.type==='EC'},
+      {t:'P/T net: edge weights and/or place capacities, places can hold several tokens',ok:net.type==='PT'}],
+     why:net.type==='PT'?'It uses weights/capacities (see definition). P/T. Name both types + properties in the exam for full credit.':'No weights, no capacities, never more than one token per place. E/C. The other type (P/T) extends it with C and W.'},
+  ];
+  R.fi=0;
+}
+function finalQHtml(){
+  const f=R.finals[R.fi];
+  return `<div class="qmeta" style="margin-top:14px"><span>Analysis</span><span>${R.fi+1} / ${R.finals.length}</span></div>
+    <div class="qtext">${f.q}</div>
+    <div class="opts">${shuffle(f.opts.map((o,i)=>i)).map(oi=>`<button class="opt" data-oi="${oi}" onclick="reachFinalPick(this)"><span>${esc(f.opts[oi].t)}</span></button>`).join('')}</div>`;
+}
+function reachFinalPick(btn){
+  const f=R.finals[R.fi],o=f.opts[+btn.dataset.oi];
+  document.querySelectorAll('.opt').forEach(b=>{
+    b.disabled=true;const oo=f.opts[+b.dataset.oi];
+    if(oo.ok)b.classList.add('right');else if(b===btn)b.classList.add('wrong');
+  });
+  award(!!o.ok,8);
+  const st=modeStat('reach');st.seen++;if(o.ok)st.right++;save();
+  const v=document.getElementById('verdict');
+  const last=R.fi>=R.finals.length-1;
+  v.innerHTML=`<div class="verdict ${o.ok?'ok':'bad'}"><div class="vh">${o.ok?'✓ Correct':'✗ Wrong'}</div><p>${f.why}</p></div>
+    <div class="btnrow"><button class="btn" id="nextbtn" onclick="${last?'reachDone()':'R.fi++;renderReach()'}">${last?'Results →':'Next →'}</button></div>`;
+  document.getElementById('nextbtn').focus();
+}
+function reachDone(){
+  const acc=R.steps?Math.max(0,Math.round(100*(R.steps-R.mistakes)/R.steps)):100;
+  const next=R.li+1<REACH_LEVELS.length;
+  SCREEN.innerHTML=`<div class="card" style="text-align:center">
+    <div class="qmeta" style="justify-content:center"><span>${R.lv.name}: cleared</span></div>
+    <div class="bigscore">${R.found.length} markings</div>
+    <p class="sub" style="margin:0 auto 10px">Table built with ${R.mistakes===0?'zero mistakes. Exam grade material.':R.mistakes+' correction'+(R.mistakes>1?'s':'')+' along the way ('+acc+'% first try). In the exam a wrong row also costs the follow-up points, so rerun this until it is clean.'}</p>
+    <div class="btnrow" style="justify-content:center">
+      ${next?`<button class="btn" onclick="startReach(${R.li+1})">Next drill →</button>`:''}
+      <button class="btn ghost" onclick="startReach(${R.li})">Repeat drill</button>
+      <button class="btn ghost" onclick="go('home')">Overview</button>
+    </div></div>`;
+}
+/* ============ BOSS: ENDTERM SIMULATION ============ */
+let B={};
+function startBoss(){
+  const qs=[
+    ...sample(TRANSLATE_BANK,3),
+    ...sample(NET_QS||(NET_QS=buildNetQuestions()),2),
+    ...sample(CPEE_BANK,3),
+    ...sample(BLITZ_BANK,4),
+  ];
+  B={qs:shuffle(qs),i:0,answers:[],t:18*60,timer:null,over:false};
+  B.timer=setInterval(()=>{
+    B.t--;const el=document.getElementById('timer');
+    if(el){el.textContent=fmtT(B.t);if(B.t<120)el.classList.add('low')}
+    if(B.t<=0)bossEnd();
+  },1000);
+  renderBossQ();
+}
+function fmtT(s){return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
+function renderBossQ(){
+  if(B.i>=B.qs.length)return bossEnd();
+  const q=B.qs[B.i];
+  let h=`<div class="card">
+    <div class="qmeta"><span>Endterm simulation</span><span><span id="timer">${fmtT(B.t)}</span> · ${B.i+1} / ${B.qs.length}</span></div>
+    <div class="qtext">${q.q}</div>${qBlocks(q)}`;
+  if(q.type==='text'){
+    h+=`<div class="tin"><input id="tanswer" autocomplete="off" spellcheck="false" onkeydown="if(event.key==='Enter')bossSubmit()"><button class="btn" onclick="bossSubmit()">Lock in</button></div>`;
+  }else{
+    const order=shuffle(q.opts.map((_,ix)=>ix));
+    h+=`<div class="opts">`+order.map((oi,vi)=>{
+      const o=q.opts[oi],inner=o.code?`<pre>${esc(o.code)}</pre>`:(o.svgOpt?`<span style="display:block;min-width:0"><span style="display:block;font-size:13.5px;font-weight:600;margin-bottom:4px">${esc(o.t)}</span><span style="display:block;overflow-x:auto">${o.svgOpt}</span></span>`:esc(o.t));
+      return `<button class="opt" id="opt${vi}" data-oi="${oi}" onclick="${q.type==='mc'?`bossPick(${vi})`:`this.classList.toggle('sel')`}"><span class="key">${vi+1}</span><span style="min-width:0">${inner}</span></button>`;
+    }).join('')+`</div>`;
+    if(q.type==='multi')h+=`<div class="btnrow"><button class="btn" onclick="bossSubmit()">Lock in selection</button></div>`;
+  }
+  h+=`</div><div class="btnrow"><button class="btn ghost" onclick="bossEnd()">Hand in early</button></div>`;
+  SCREEN.innerHTML=h;
+  const inp=document.getElementById('tanswer');if(inp)inp.focus();
+}
+function bossPick(vi){
+  const q=B.qs[B.i],o=q.opts[+document.getElementById('opt'+vi).dataset.oi];
+  B.answers.push({q,ok:!!o.ok});B.i++;renderBossQ();
+}
+function bossSubmit(){
+  const q=B.qs[B.i];let ok;
+  if(q.type==='text')ok=norm(document.getElementById('tanswer').value)===norm(q.answer);
+  else{
+    ok=true;
+    document.querySelectorAll('.opt').forEach(b=>{
+      const o=q.opts[+b.dataset.oi];if(b.classList.contains('sel')!==!!o.ok)ok=false;
+    });
+  }
+  B.answers.push({q,ok});B.i++;renderBossQ();
+}
+function bossEnd(){
+  if(B.over)return;B.over=true;clearInterval(B.timer);
+  const n=B.answers.length,right=B.answers.filter(a=>a.ok).length;
+  const pct=B.qs.length?Math.round(100*right/B.qs.length):0;
+  const grade=pct>=90?'1.0':pct>=82?'1.3':pct>=75?'1.7':pct>=67?'2.0':pct>=60?'2.3':pct>=55?'2.7':pct>=50?'3.0':pct>=45?'3.3':pct>=40?'3.7':pct>=35?'4.0':'5.0';
+  S.boss=Math.max(S.boss||0,pct);S.xp+=right*6;save();rail();
+  let h=`<div class="card" style="text-align:center">
+    <div class="qmeta" style="justify-content:center"><span>Endterm simulation: result</span></div>
+    <div class="bigscore">${right} / ${B.qs.length}</div>
+    <p class="sub" style="margin:0 auto">≈ TUM grade <b>${grade}</b>${grade==='5.0'?': durchgefallen. Back to training.':grade<='1.7'?': sehr gut. Keep it sharp.':''} · unanswered count as wrong · best so far: ${S.boss}%</p>
+    <div class="btnrow" style="justify-content:center;margin-bottom:6px">
+      <button class="btn" onclick="go('boss')">Retake</button>
+      <button class="btn ghost" onclick="go('home')">Overview</button>
+    </div></div>
+    <div class="eyebrow">Review</div>`;
+  B.answers.forEach((a,ix)=>{
+    h+=`<div class="card" style="margin-top:10px">
+      <div class="qmeta"><span style="color:${a.ok?'var(--ok)':'var(--bad)'}">${a.ok?'✓':'✗'} Question ${ix+1}</span></div>
+      <div class="qtext" style="font-size:15px">${a.q.q}</div>
+      ${a.q.svg?`<div class="diagram">${a.q.svg}</div>`:''}
+      <p class="qnote">${a.q.why||''}</p></div>`;
+  });
+  SCREEN.innerHTML=h;window.scrollTo(0,0);
+}
+
+/* ============ CHEAT SHEET ============ */
+function renderManual(){
+  SCREEN.innerHTML=`
+  <h1>Cheat Sheet</h1>
+  <p class="sub">Compiled from the 2026 lecture slides and the official exam instruction sheets, not from uploaded solution sheets. Still: if anything here contradicts your lecture materials, the lecture wins.</p>
+  <div class="card manual">
+    <h3>Pseudo code rules (Problem 1)</h3>
+    <ul>
+      <li>Allowed instructions only: <code>if / else if / else / end</code>, <code>while … end</code>, <code>task LABEL</code>, <code>parallel / branch / end</code>, <code>mutex … end</code> (only inside parallel branches), <code>set VAR = VALUE</code>, <code>deadlock</code>.</li>
+      <li><b>If no condition of a decision is valid, a deadlock occurs: model it explicitly</b> (an <code>else deadlock</code>), unless the BPMN has a default (else) flow.</li>
+      <li>Conditions like C1 are expressions, not variables: <b>never</b> <code>set</code> them. They can change whenever a task executes → for inclusive ORs, <b>latch conditions into variables first</b>, then execute branches.</li>
+      <li>Shared flags in parallel branches need <code>mutex</code> around test-and-set: otherwise race condition.</li>
+      <li>Only traces the BPMN describes may be possible: check loop type (pre-test vs post-test) by <b>where the back-edge re-enters</b> relative to the condition gateway.</li>
+      <li>Not well-formed model? Restructure to a trace-equivalent block-structured model first.</li>
+    </ul>
+    <h3>Petri net firing rules</h3>
+    <ul>
+      <li><b>E/C net</b> N=(P,T,F): t enabled ⇔ all input places carry a token AND output places are free. Max 1 token per place.</li>
+      <li><b>P/T net</b> N=(P,T,F,C,W,M0), Def 2.5: t activated under M ⇔ ∀p∈•t: M(p) ≥ W(p,t) and ∀ output place: tokens after firing ≤ C(p). Defaults: W=1, C=∞.</li>
+      <li>Trap: W(p,t) &gt; C(p) for the same place ⇒ t can <b>never</b> fire (L0).</li>
+      <li>Places and transitions always alternate; use silent (τ) transitions to keep it that way.</li>
+      <li>XOR split = place with several output transitions (non-determinism). AND split = transition with several output places.</li>
+    </ul>
+    <h3>Analysis vocabulary (Problems 2–3)</h3>
+    <table>
+      <tr><th>Term</th><th>Meaning</th></tr>
+      <tr><td>k-bounded</td><td>max k tokens in <b>each single place</b>, over all reachable markings. 1-bounded = safe. Judged per place, not per net.</td></tr>
+      <tr><td>L0-live</td><td>t can never fire</td></tr>
+      <tr><td>L1-live</td><td>t can fire at least once: finitely, determined from the start</td></tr>
+      <tr><td>L2-live</td><td>finite but not determined how often (rare; hardly exam-relevant)</td></tr>
+      <tr><td>L3-live</td><td>t CAN fire infinitely often for some sequence (loop with exit)</td></tr>
+      <tr><td>L4-live</td><td>t can always fire again from every reachable marking</td></tr>
+      <tr><td>live / strong-live</td><td>ALL transitions L4</td></tr>
+      <tr><td>quasi-live / weak-live</td><td>at least one L4, plus lower-live ones (mutually exclusive with live)</td></tr>
+      <tr><td>deadlock / dead state</td><td>reachable marking, no transition enabled: a row with no successor in the table</td></tr>
+      <tr><td>home state</td><td>reachable from every reachable marking</td></tr>
+      <tr><td>structurally sound</td><td>∃ initial node (no incoming), ∃ final node (no outgoing), every node on a path between them: <b>markings ignored</b></td></tr>
+      <tr><td>Soundness P1–P4</td><td>P1 termination · P2 proper termination (no leftover tokens ⇒ bounded) · P3 no dead transitions · P4 participation (P1∧P3 ⇒ P4)</td></tr>
+    </table>
+    <h3>Reachability analysis method</h3>
+    <ul>
+      <li>One row per marking M0…Mn: token count per place + “firing transition” column (<code>t2 → M3</code>).</li>
+      <li>Explore <b>every</b> enabled transition of every new marking. Already-known result ⇒ reference it (<code>t1 → M2</code>), don’t re-explore.</li>
+      <li>Rows without successors = dead states. Max column value = boundedness. Cite rows/columns as evidence in your answers.</li>
+    </ul>
+    <h3>CPEE trees (Problem 4)</h3>
+    <ul>
+      <li>Ordered XML tree, depth-first execution; edges implicit ⇒ structural deadlocks impossible (behavioral still possible).</li>
+      <li><b>Leaves:</b> Activity <code>&lt;call&gt;</code>, Script <code>&lt;manipulate&gt;</code>, Terminate, Stop, Escape. <b>Branches:</b> Choose, Alternative, Otherwise, Parallel, Parallel Branch.</li>
+      <li><code>&lt;loop mode="pre_test|post_test"&gt;</code>: condition before vs after each iteration. post_test with false condition still runs once.</li>
+      <li><code>&lt;choose mode="exclusive|inclusive"&gt;</code>: children evaluated in document order. Inclusive: every true alternative runs (in order!); otherwise only if none matched; missing otherwise = assumed empty.</li>
+      <li><code>&lt;parallel wait="-1|n" cancel="…"&gt;</code>: wait for all / n branches. <code>wait="1" cancel="first"</code> = event-based gateway.</li>
+      <li><code>escape</code> = jump out of nearest loop; <code>terminate</code> = final; <code>stop</code> = pausable. Ids (interruption points) only on activity, script, stop.</li>
+      <li>Trace tasks: write explicit sequences (ABCDEB…), not *-notation, when iterations are fixed by data conditions.</li>
+    </ul>
+    <h3>Logs & lifecycles (Problem 4 theory)</h3>
+    <ul>
+      <li>Log item minimum: event/task name · timestamp · instance · lifecycle info. XES: log → trace (one per instance) → event.</li>
+      <li>Appendable text formats (CSV/YAML/plain) = fastest logging; XML/JSON = bad IO.</li>
+      <li>Logging = after-the-fact analysis; monitoring = runtime event streams.</li>
+      <li>Instance lifecycle: ready → running → stopping → stopped → … → finished. Task: calling → receiving → manipulating → done/failed. </li>
+      <li>Worklist = control + handling; pull = outdated lists, push = too chatty, best compromise = time-driven push. Roles make people exchangeable.</li>
+      <li>Process management system: designers + participants (stakeholders); modeling GUI, model repository, engine, worklist, invoked applications (components).</li>
+    </ul>
+  </div>
+  <div class="btnrow"><button class="btn" onclick="go('home')">Back to overview</button></div>`;
+}
+
+/* ============ HOME ============ */
+function meterSvg(frac){
+  let s='<svg width="110" height="18" viewBox="0 0 110 18">';
+  const filled=Math.round(frac*5);
+  for(let i=0;i<5;i++){
+    const x=11+i*22;
+    s+=`<circle cx="${x}" cy="9" r="7.5" fill="none" stroke="var(--line)" stroke-width="1.5"/>`;
+    if(i<filled)s+=`<circle cx="${x}" cy="9" r="3.5" fill="var(--tok)"/>`;
+  }
+  return s+'</svg>';
+}
+function mastery(id,target){
+  const st=S.modes[id];if(!st||!st.seen)return {frac:0,label:'untouched'};
+  const frac=Math.min(1,st.right/target);
+  return {frac,label:`${st.right} hits · ${Math.round(100*st.right/st.seen)}% accuracy`};
+}
+function renderHome(){
+  const ops=[
+    {id:'translate',n:'OP·01',target:14,go:"startMission('translate')"},
+    {id:'nets',n:'OP·02',target:12,go:"startMission('nets')"},
+    {id:'reach',n:'OP·03',target:20,go:"go('reach',0)",title:'Reachability Lab',sub:'Problem 3 · build the table, fire by fire · ≈24 credits: incl. the REAL 2022 & SS23 exam nets'},
+    {id:'cpee',n:'OP·04',target:12,go:"startMission('cpee')"},
+    {id:'blitz',n:'OP·05',target:16,go:"startMission('blitz')"},
+  ];
+  let h=`<h1>Pick a drill.</h1>
+  <p class="sub">Four problems, 90 credits, 90 minutes. That is the exam. Petri net answers are computed live from the formal firing rules, and the reachability drills include real past-exam nets. Start where the credits are: translation and reachability together are half the exam.</p>
+  <div class="card" style="border-color:var(--accent);margin:0 0 18px">
+    <div class="qmeta"><span style="color:var(--accent)">⚠ Read this first</span></div>
+    <p style="margin:8px 0 0;font-size:14px;max-width:70ch">This is an unofficial personal study project. It is <b>not associated with the TUM lecture, the chair, or any official material</b>. Your lecture notes are the top priority and the ground truth. This game helped me prepare and might help you too, but take it with a grain of salt: despite careful checking, some content may be wrong. Whenever something here contradicts the lecture, trust the lecture.</p>
+  </div>
+  <div class="ops">`;
+  for(const o of ops){
+    const cfg=MODES[o.id]||{};
+    const m=mastery(o.id,o.target);
+    h+=`<div class="op" tabindex="0" role="button" onclick="${o.go}" onkeydown="if(event.key==='Enter')this.click()">
+      <div class="num">${o.n}</div>
+      <div class="body">
+        <div class="t">${o.title||cfg.title}</div>
+        <div class="d">${o.sub||cfg.sub}</div>
+        <div class="meter">${meterSvg(m.frac)}<span class="pct">${m.label}</span></div>
+      </div></div>`;
+  }
+  h+=`<div class="op boss" tabindex="0" role="button" onclick="go('boss')" onkeydown="if(event.key==='Enter')this.click()">
+      <div class="num">BOSS</div>
+      <div class="body">
+        <div class="t">Endterm Simulation</div>
+        <div class="d">12 mixed questions · 18-minute timer · no feedback until you hand in${S.boss?` · best: ${S.boss}%`:''}</div>
+      </div></div>
+  </div>
+  <div class="btnrow">
+    <button class="btn ghost" onclick="go('manual')">📖 Cheat sheet: every definition in one place</button>
+    <button class="btn ghost" onclick="if(confirm('Reset all progress?')){localStorage.removeItem(SAVE_KEY);S=load();rail();go('home')}">Reset progress</button>
+  </div>
+  <p class="footnote">Question style and topic weighting follow past BPTM exams and the SS24 topics protocol (workflow/WSM nets and process mining excluded there; verify nothing changed for your term). Definitions follow the 2026 lecture slides. Progress is saved in your browser only.</p>
+  <div class="credits">
+    <span class="who">Built by <b>Devansh Devrani</b>: a fellow BPTM student.</span>
+    <a class="clink" href="https://www.linkedin.com/in/devansh-devrani/" target="_blank" rel="noopener">in · LinkedIn</a>
+    <a class="clink coffee" href="https://buymeacoffee.com/devanshdevrani31" target="_blank" rel="noopener">☕ Buy me a coffee</a>
+  </div>`;
+  SCREEN.innerHTML=h;
+}
+/* ============ INIT ============ */
+rail();go('home');
+</script>
+
+<script>
+/* ---------------------------------------------------------------------------
+   UniDojo host adapter. Added on import; the game above is otherwise unchanged.
+   Protocol: docs/02-game-contract.md
+
+   Note: the frame is sandboxed without allow-modals, so alert()/confirm() calls
+   in the game are ignored by the browser and their actions simply don't happen.
+   That is deliberate — a modal from inside a game blocks the whole page.
+   --------------------------------------------------------------------------- */
+(function () {
+  'use strict';
+  var V = 1;
+  function post(type, payload) {
+    if (parent !== window) parent.postMessage({ v: V, type: type, payload: payload }, '*');
+  }
+  /** Run `after` once the named global function has done its work. */
+  function wrap(name, after) {
+    var orig = window[name];
+    if (typeof orig !== 'function') return;
+    window[name] = function () {
+      var r = orig.apply(this, arguments);
+      try { after(); } catch (e) {}
+      return r;
+    };
+  }
+
+  // The trainer already tracks its own results; wrap the two places a run ends so the
+  // host learns the score, without changing how any of it behaves.
+  wrap('renderQ', function () {
+    if (typeof M === 'object' && M && M.qs && M.qs.length) {
+      post('progress', { done: Math.min(M.i, M.qs.length), total: M.qs.length });
+    }
+  });
+  wrap('missionEnd', function () {
+    if (typeof M !== 'object' || !M || !M.qs || !M.qs.length) return;
+    post('complete', {
+      score: Math.round((100 * M.right) / M.qs.length), max: 100, durationMs: 0,
+      breakdown: { correct: M.right, total: M.qs.length, drill: M.mode },
+    });
+  });
+  // bossEnd() guards itself with B.over and returns early on a second call, so check
+  // that flag BEFORE the original runs or we'd report the same result twice.
+  (function () {
+    var orig = window.bossEnd;
+    if (typeof orig !== 'function') return;
+    window.bossEnd = function () {
+      var already = typeof B === 'object' && B && B.over;
+      var r = orig.apply(this, arguments);
+      if (!already) {
+        try {
+          var right = B.answers.filter(function (a) { return a.ok; }).length;
+          post('complete', {
+            score: Math.round((100 * right) / B.qs.length), max: 100,
+            durationMs: (18 * 60 - B.t) * 1000,
+            breakdown: { correct: right, total: B.qs.length, mode: 'endterm' },
+          });
+        } catch (e) {}
+      }
+      return r;
+    };
+  })();
+  // These trainers run their own modes, so 'init' carries nothing they need — they are
+  // already on screen. Answering it is what tells the host we're alive.
+  addEventListener('message', function (e) {
+    var d = e.data;
+    if (!d || d.v !== V || d.type !== 'init') return;
+  });
+  post('ready');
+})();
+</script>
