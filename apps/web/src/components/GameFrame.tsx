@@ -85,6 +85,7 @@ export function GameFrame({
   srcDoc,
   title,
   mode,
+  showMode = true,
   minHeight = 520,
   onComplete,
 }: {
@@ -94,6 +95,8 @@ export function GameFrame({
   srcDoc?: string;
   title: string;
   mode: Mode;
+  /** False when the game honours only one mode, so naming it would mislead. */
+  showMode?: boolean;
   minHeight?: number;
   onComplete?: (r: Result) => void;
 }) {
@@ -311,7 +314,13 @@ export function GameFrame({
             className="h-1.5 w-1.5 rounded-full"
             style={{ background: ready ? "#3fae6b" : "var(--fg-muted)" }}
           />
-          {ready ? (mode === "test" ? "Test — scored" : "Practice") : "Loading…"}
+          {!ready
+            ? "Loading…"
+            : showMode
+              ? mode === "test"
+                ? "Test — scored"
+                : "Practice"
+              : "Playing"}
           {expanded && <span className="ml-1 truncate font-medium">· {title}</span>}
         </span>
 

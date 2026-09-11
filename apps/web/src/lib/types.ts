@@ -27,6 +27,12 @@ export interface Game {
   rung: 1 | 2 | 3 | 4;
   estimatedMinutes: number;
   difficulty: "easy" | "medium" | "hard";
+  /**
+   * Which modes the game genuinely honours from `init` — mirrors `modes` in its
+   * manifest. Only offer the player a choice the game actually acts on: a toggle that
+   * restarts a run and changes nothing is worse than no toggle.
+   */
+  modes: ("practice" | "test")[];
   editable: boolean;
   playCount: number;
   ratingAccuracy: number | null;

@@ -12,6 +12,7 @@ export function PlaySurface({
   fun,
   ratingCount,
   editable,
+  modes,
 }: {
   src: string;
   title: string;
@@ -19,8 +20,11 @@ export function PlaySurface({
   fun: number | null;
   ratingCount: number;
   editable: boolean;
+  /** Modes the game actually honours. A single entry means no toggle. */
+  modes: Mode[];
 }) {
-  const [mode, setMode] = useState<Mode>("practice");
+  const choices = modes.length ? modes : (["practice"] as Mode[]);
+  const [mode, setMode] = useState<Mode>(choices[0]);
   const [finished, setFinished] = useState(false);
   const [run, setRun] = useState(0);
 
@@ -37,33 +41,36 @@ export function PlaySurface({
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
       <div>
-        <div className="mb-3 flex items-center gap-1 text-sm">
-          {(["practice", "test"] as const).map((m) => (
-            <button
-              key={m}
-              onClick={() => switchMode(m)}
-              className="rounded-lg px-3 py-1.5 font-medium capitalize transition-colors"
-              style={
-                mode === m
-                  ? { background: "var(--accent)", color: "#fff" }
-                  : { color: "var(--fg-muted)" }
-              }
-            >
-              {m}
-            </button>
-          ))}
-          <span className="ml-2 text-[13px] muted">
-            {mode === "practice"
-              ? "Answers shown when you slip."
-              : "No answers. Scored."}
-          </span>
-        </div>
+        {choices.length > 1 && (
+          <div className="mb-3 flex items-center gap-1 text-sm">
+            {choices.map((m) => (
+              <button
+                key={m}
+                onClick={() => switchMode(m)}
+                className="rounded-lg px-3 py-1.5 font-medium capitalize transition-colors"
+                style={
+                  mode === m
+                    ? { background: "var(--accent)", color: "#fff" }
+                    : { color: "var(--fg-muted)" }
+                }
+              >
+                {m}
+              </button>
+            ))}
+            <span className="ml-2 text-[13px] muted">
+              {mode === "practice"
+                ? "Answers shown when you slip."
+                : "No answers. Scored."}
+            </span>
+          </div>
+        )}
 
         <GameFrame
           key={`${mode}-${run}`}
           src={src}
           title={title}
           mode={mode}
+          showMode={choices.length > 1}
           onComplete={onComplete}
         />
       </div>

@@ -89,6 +89,11 @@ Rules, enforced at upload by `scripts/validate-bundle.ts`:
 `editable: true` promises that all the game's material lives in `content.json` and that
 editing it is safe — nothing in `index.html` duplicates or contradicts it. Default `false`.
 
+`modes` must list only the modes the game **actually acts on**. The host shows a
+practice/test switch only when there is more than one, because switching restarts the run
+— a toggle that costs the player their progress and then changes nothing is worse than no
+toggle at all. Declaring `["practice"]` is the honest answer for most games.
+
 `scoring.type` is one of `points` | `percent` | `time` | `none`. `none` means the game is
 exploratory (a simulation, a diagram explorer) and won't appear on leaderboards.
 

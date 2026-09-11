@@ -90,6 +90,7 @@ export default async function GamePage({
         fun={game.ratingFun}
         ratingCount={game.ratingCount}
         editable={game.editable}
+        modes={game.modes}
       />
 
       <div className="mb-24" />
